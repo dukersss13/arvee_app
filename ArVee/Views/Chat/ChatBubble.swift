@@ -20,9 +20,29 @@ struct ChatBubble: View {
                     }
                 }
                 .padding(12)
-                .background(isUser ? Color.accentColor : Color(.systemGray5))
-                .foregroundColor(isUser ? .white : .primary)
-                .cornerRadius(16)
+                .foregroundColor(isUser ? .white : .arveeInk)
+                .background(
+                    Group {
+                        if isUser {
+                            Color.arveeTealGradient
+                        } else {
+                            LinearGradient(
+                                colors: [Color.arveePaper, Color.arveePaper],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        }
+                    }
+                )
+                .clipShape(BubbleShape(isUser: isUser))
+                .overlay(
+                    Group {
+                        if !isUser {
+                            BubbleShape(isUser: isUser)
+                                .stroke(Color.arveeLine, lineWidth: 0.5)
+                        }
+                    }
+                )
 
                 if !isUser { Spacer(minLength: 60) }
             }
@@ -56,7 +76,7 @@ struct TypingIndicator: View {
         HStack(spacing: 4) {
             ForEach(0..<3, id: \.self) { i in
                 Circle()
-                    .fill(Color.secondary)
+                    .fill(Color.arveeTeal)
                     .frame(width: 8, height: 8)
                     .scaleEffect(dotScale(for: i))
             }

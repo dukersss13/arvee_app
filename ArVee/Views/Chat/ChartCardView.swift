@@ -8,7 +8,8 @@ struct ChartCardView: View {
         VStack(alignment: .leading, spacing: 8) {
             if let title = chart.title {
                 Text(title)
-                    .font(.subheadline.weight(.semibold))
+                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                    .foregroundColor(.arveeInk)
             }
 
             Group {
@@ -21,14 +22,13 @@ struct ChartCardView: View {
                     pieChart
                 default:
                     Text("Unsupported chart type: \(chart.type)")
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.arveeInkMuted)
                 }
             }
             .frame(height: 240)
         }
         .padding()
-        .background(Color(.secondarySystemBackground))
-        .cornerRadius(12)
+        .arveeCard(cornerRadius: 12)
     }
 
     // MARK: - Bar Chart
@@ -42,7 +42,7 @@ struct ChartCardView: View {
                         x: .value("Category", label),
                         y: .value("Amount", value)
                     )
-                    .foregroundStyle(Color.accentColor.gradient)
+                    .foregroundStyle(Color.arveeTeal.gradient)
                     .cornerRadius(4)
                 }
             }
@@ -52,9 +52,17 @@ struct ChartCardView: View {
                         if let v = value.as(Double.self) {
                             Text(currencyLabel(v))
                                 .font(.caption2)
+                                .foregroundColor(.arveeInkMuted)
                         }
                     }
-                    AxisGridLine()
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
+                        .foregroundStyle(Color.arveeLine)
+                }
+            }
+            .chartXAxis {
+                AxisMarks { _ in
+                    AxisValueLabel()
+                        .foregroundStyle(Color.arveeInkMuted)
                 }
             }
         }
@@ -66,13 +74,13 @@ struct ChartCardView: View {
     private var groupedBarChart: some View {
         if let categories = chart.x, let series = chart.series {
             Chart {
-                ForEach(series) { s in
+                ForEach(Array(series.enumerated()), id: \.element.id) { idx, s in
                     ForEach(Array(zip(categories, s.values)), id: \.0) { cat, val in
                         BarMark(
                             x: .value("Category", cat),
                             y: .value("Amount", val)
                         )
-                        .foregroundStyle(by: .value("Period", s.name))
+                        .foregroundStyle(Color.arveeChartPalette[idx % Color.arveeChartPalette.count])
                         .cornerRadius(4)
                         .position(by: .value("Period", s.name))
                     }
@@ -84,12 +92,21 @@ struct ChartCardView: View {
                         if let v = value.as(Double.self) {
                             Text(currencyLabel(v))
                                 .font(.caption2)
+                                .foregroundColor(.arveeInkMuted)
                         }
                     }
-                    AxisGridLine()
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
+                        .foregroundStyle(Color.arveeLine)
+                }
+            }
+            .chartXAxis {
+                AxisMarks { _ in
+                    AxisValueLabel()
+                        .foregroundStyle(Color.arveeInkMuted)
                 }
             }
             .chartLegend(position: .top)
+            .chartForegroundStyleScale(range: Color.arveeChartPalette)
         }
     }
 
@@ -99,17 +116,21 @@ struct ChartCardView: View {
     private var pieChart: some View {
         if let labels = chart.labels, let values = chart.values {
             Chart {
-                ForEach(Array(zip(labels, values)), id: \.0) { label, value in
+                ForEach(Array(zip(labels, values).enumerated()), id: \.element.0) { idx, pair in
                     SectorMark(
-                        angle: .value("Amount", value),
+                        angle: .value("Amount", pair.1),
                         innerRadius: .ratio(0.5),
                         angularInset: 1.5
                     )
-                    .foregroundStyle(by: .value("Category", label))
+                    .foregroundStyle(Color.arveeChartPalette[idx % Color.arveeChartPalette.count])
                     .cornerRadius(4)
                 }
             }
             .chartLegend(position: .bottom, spacing: 8)
+            .chartForegroundStyleScale(
+                domain: labels,
+                range: Array(Color.arveeChartPalette.prefix(labels.count))
+            )
         }
     }
 

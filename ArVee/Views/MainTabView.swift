@@ -33,5 +33,8 @@ struct MainTabView: View {
                     Label("Settings", systemImage: "gear")
                 }
         }
+        .tint(.arveeTeal)
+        .toolbarBackground(Color.arveePaper, for: .tabBar)
+        .toolbarBackground(.visible, for: .tabBar)
     }
 }

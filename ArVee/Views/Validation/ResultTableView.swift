@@ -17,33 +17,39 @@ struct ResultTableView: View {
                 HStack(spacing: 0) {
                     ForEach(columns, id: \.self) { col in
                         Text(formatHeader(col))
-                            .font(.caption.weight(.semibold))
+                            .font(.system(.caption, design: .rounded).weight(.semibold))
+                            .foregroundColor(.arveeInkMuted)
                             .frame(minWidth: 100, alignment: .leading)
                             .padding(8)
-                            .background(Color(.systemGray5))
                     }
                 }
+                .background(Color.arveeTableHead)
 
-                Divider()
+                Divider().overlay(Color.arveeLine)
 
                 // Rows
                 ScrollView(.vertical) {
                     LazyVStack(spacing: 0) {
-                        ForEach(rows) { row in
+                        ForEach(Array(rows.enumerated()), id: \.element.id) { idx, row in
                             HStack(spacing: 0) {
                                 ForEach(columns, id: \.self) { col in
                                     Text(row.value(for: col))
-                                        .font(.caption)
+                                        .font(.system(.caption, design: .monospaced))
+                                        .foregroundColor(.arveeInk)
                                         .frame(minWidth: 100, alignment: .leading)
                                         .padding(8)
                                 }
                             }
-                            Divider()
+                            .background(idx % 2 == 0 ? Color.clear : Color.arveeTeal.opacity(0.03))
+                            Divider().overlay(Color.arveeLine)
                         }
                     }
                 }
             }
         }
+        .padding(1)
+        .arveeCard(cornerRadius: 12)
+        .padding(.horizontal, 16)
     }
 
     private func formatHeader(_ key: String) -> String {

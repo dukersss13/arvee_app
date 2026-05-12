@@ -1,0 +1,115 @@
+import SwiftUI
+
+// MARK: - ArVee Color Palette
+
+extension Color {
+
+    // Warm paper background — matches web --paper: #f4efe4
+    static let arveePaper = Color(light: .init(hex: 0xF4EFE4), dark: .init(hex: 0x1A1816))
+
+    // Sandy tan — matches web --sand: #e9dbc1
+    static let arveeSand = Color(light: .init(hex: 0xE9DBC1), dark: .init(hex: 0x2A2520))
+
+    // Soft mint — matches web --mint: #d2ece5
+    static let arveeMint = Color(light: .init(hex: 0xD2ECE5), dark: .init(hex: 0x1A2E29))
+
+    // Primary text — matches web --ink: #1f1d1a
+    static let arveeInk = Color(light: .init(hex: 0x1F1D1A), dark: .init(hex: 0xF0EBE2))
+
+    // Muted text — matches web --ink-muted: #5a554d
+    static let arveeInkMuted = Color(light: .init(hex: 0x5A554D), dark: .init(hex: 0xA39B8E))
+
+    // Primary teal — matches web --teal: #0f7b6c
+    static let arveeTeal = Color(light: .init(hex: 0x0F7B6C), dark: .init(hex: 0x2DB8A2))
+
+    // Teal dark — matches web --teal-dark: #0a5f53
+    static let arveeTealDark = Color(light: .init(hex: 0x0A5F53), dark: .init(hex: 0x1A8F7D))
+
+    // Coral accent — matches web --coral: #ea8f58
+    static let arveeCoral = Color(light: .init(hex: 0xEA8F58), dark: .init(hex: 0xEA8F58))
+
+    // Danger red — matches web --danger: #b23a2c
+    static let arveeDanger = Color(light: .init(hex: 0xB23A2C), dark: .init(hex: 0xE05545))
+
+    // Card surface — matches web --card: rgba(255,255,255,0.86)
+    static let arveeCard = Color(light: .init(white: 1.0, alpha: 0.86), dark: .init(hex: 0x242120, alpha: 0.9))
+
+    // Borders — matches web --line: rgba(34,30,26,0.15)
+    static let arveeLine = Color(light: .init(hex: 0x221E1A, alpha: 0.15), dark: .init(hex: 0xF0EBE2, alpha: 0.12))
+
+    // Table header background — matches web #f4ebda
+    static let arveeTableHead = Color(light: .init(hex: 0xF4EBDA), dark: .init(hex: 0x2E2924))
+
+    // MARK: - Chart Palette (matching web SVG colors)
+
+    static let arveeChartPalette: [Color] = [
+        Color(UIColor(hex: 0x0F7B6C)),   // teal
+        Color(UIColor(hex: 0xE59F3A)),   // golden
+        Color(UIColor(hex: 0x6F8A3B)),   // olive
+        Color(UIColor(hex: 0xCF6B4D)),   // terracotta
+        Color(UIColor(hex: 0x4A7895)),   // steel blue
+        Color(UIColor(hex: 0xB7779F)),   // mauve
+        Color(UIColor(hex: 0x8F6B4F)),   // brown
+    ]
+
+    // MARK: - Gradients
+
+    static var arveeTealGradient: LinearGradient {
+        LinearGradient(
+            colors: [.arveeTeal, .arveeTealDark],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
+}
+
+// MARK: - Adaptive Color Initializer
+
+extension Color {
+    init(light: UIColor, dark: UIColor) {
+        self.init(uiColor: UIColor { traitCollection in
+            traitCollection.userInterfaceStyle == .dark ? dark : light
+        })
+    }
+}
+
+// MARK: - UIColor hex initializer
+
+extension UIColor {
+    convenience init(hex: UInt32, alpha: CGFloat = 1.0) {
+        self.init(
+            red: CGFloat((hex >> 16) & 0xFF) / 255.0,
+            green: CGFloat((hex >> 8) & 0xFF) / 255.0,
+            blue: CGFloat(hex & 0xFF) / 255.0,
+            alpha: alpha
+        )
+    }
+
+    convenience init(white: CGFloat, alpha: CGFloat) {
+        self.init(red: white, green: white, blue: white, alpha: alpha)
+    }
+}
+
+// MARK: - Font Helpers (system fallbacks matching web typography spirit)
+
+extension Font {
+    static func arveeBrand(_ size: CGFloat = 28) -> Font {
+        .system(size: size, weight: .bold, design: .rounded)
+    }
+
+    static func arveeHeadline() -> Font {
+        .system(.headline, design: .rounded).weight(.semibold)
+    }
+
+    static func arveeBody() -> Font {
+        .system(.body, design: .rounded)
+    }
+
+    static func arveeMono(_ style: TextStyle = .caption) -> Font {
+        .system(style, design: .monospaced)
+    }
+
+    static func arveeEyebrow() -> Font {
+        .system(size: 11, weight: .semibold, design: .rounded)
+    }
+}

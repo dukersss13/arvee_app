@@ -9,9 +9,16 @@ struct StatusBanner: View {
 
         var color: Color {
             switch self {
-            case .error: return .red
-            case .info: return .blue
-            case .success: return .green
+            case .error: return .arveeDanger
+            case .info: return .arveeTeal
+            case .success: return .arveeMint
+            }
+        }
+
+        var textColor: Color {
+            switch self {
+            case .error, .info: return .white
+            case .success: return .arveeTealDark
             }
         }
 
@@ -28,14 +35,15 @@ struct StatusBanner: View {
         HStack(spacing: 8) {
             Image(systemName: type.icon)
             Text(message)
-                .font(.subheadline)
+                .font(.system(.subheadline, design: .rounded))
                 .multilineTextAlignment(.leading)
             Spacer()
         }
-        .foregroundColor(.white)
+        .foregroundColor(type.textColor)
         .padding(12)
-        .background(type.color.opacity(0.85))
+        .background(type.color.opacity(type == .success ? 1.0 : 0.9))
         .cornerRadius(10)
+        .shadow(color: type.color.opacity(0.15), radius: 6, x: 0, y: 2)
         .padding(.horizontal)
     }
 }
@@ -45,19 +53,21 @@ struct LoadingOverlay: View {
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.3)
+            Color.arveeInk.opacity(0.2)
                 .ignoresSafeArea()
 
             VStack(spacing: 16) {
                 ProgressView()
                     .scaleEffect(1.3)
+                    .tint(.arveeTeal)
                 Text(message)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .font(.system(.subheadline, design: .rounded))
+                    .foregroundColor(.arveeInkMuted)
             }
             .padding(32)
-            .background(.ultraThinMaterial)
+            .background(Color.arveeCard)
             .cornerRadius(16)
+            .shadow(color: Color.arveeInk.opacity(0.1), radius: 20, x: 0, y: 8)
         }
     }
 }

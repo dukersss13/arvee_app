@@ -6,29 +6,30 @@ struct TopCategoriesCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("Top Categories")
-                .font(.caption.weight(.semibold))
-                .foregroundColor(.secondary)
+            Text("TOP CATEGORIES")
+                .font(.arveeEyebrow())
+                .foregroundColor(.arveeInkMuted)
+                .tracking(1)
 
             ForEach(categories) { cat in
                 HStack {
                     Text(cat.category)
-                        .font(.subheadline)
+                        .font(.system(.subheadline, design: .rounded))
+                        .foregroundColor(.arveeInk)
                     Spacer()
                     Text(String(format: "$%.2f", cat.value))
-                        .font(.subheadline.monospacedDigit())
-                        .foregroundColor(.secondary)
+                        .font(.system(.subheadline, design: .monospaced).monospacedDigit())
+                        .foregroundColor(.arveeInkMuted)
                 }
                 .padding(.vertical, 2)
 
                 if cat.id != categories.last?.id {
-                    Divider()
+                    Divider().overlay(Color.arveeLine)
                 }
             }
         }
         .padding()
-        .background(Color(.secondarySystemBackground))
-        .cornerRadius(12)
+        .arveeCard(cornerRadius: 12)
     }
 }
 
@@ -39,30 +40,30 @@ struct ComparisonTableCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             if let cols = table.columns, cols.count >= 2 {
-                Text("Comparison")
-                    .font(.caption.weight(.semibold))
-                    .foregroundColor(.secondary)
+                Text("COMPARISON")
+                    .font(.arveeEyebrow())
+                    .foregroundColor(.arveeInkMuted)
+                    .tracking(1)
             }
 
             ScrollView(.horizontal, showsIndicators: false) {
                 VStack(spacing: 0) {
                     // Header
                     headerRow
-                    Divider()
+                    Divider().overlay(Color.arveeLine)
 
                     // Data rows
                     if let rows = table.rows {
                         ForEach(rows) { row in
                             dataRow(row)
-                            Divider()
+                            Divider().overlay(Color.arveeLine)
                         }
                     }
                 }
             }
         }
         .padding()
-        .background(Color(.secondarySystemBackground))
-        .cornerRadius(12)
+        .arveeCard(cornerRadius: 12)
     }
 
     private var headerRow: some View {
@@ -79,8 +80,10 @@ struct ComparisonTableCard: View {
                 .frame(width: 70, alignment: .trailing)
         }
         .font(.caption2.weight(.semibold))
-        .foregroundColor(.secondary)
+        .foregroundColor(.arveeInkMuted)
         .padding(.vertical, 6)
+        .padding(.horizontal, 8)
+        .background(Color.arveeTableHead)
     }
 
     private func dataRow(_ row: ComparisonRow) -> some View {
@@ -88,10 +91,13 @@ struct ComparisonTableCard: View {
             Text(row.category)
                 .lineLimit(1)
                 .frame(width: 100, alignment: .leading)
+                .foregroundColor(.arveeInk)
             Text(formatAmount(row.period1))
                 .frame(width: 80, alignment: .trailing)
+                .foregroundColor(.arveeInk)
             Text(formatAmount(row.period2))
                 .frame(width: 80, alignment: .trailing)
+                .foregroundColor(.arveeInk)
             Text(formatDelta(row.delta))
                 .foregroundColor(deltaColor(row.delta))
                 .frame(width: 80, alignment: .trailing)
@@ -99,8 +105,9 @@ struct ComparisonTableCard: View {
                 .foregroundColor(deltaColor(row.delta))
                 .frame(width: 70, alignment: .trailing)
         }
-        .font(.caption.monospacedDigit())
+        .font(.system(.caption, design: .monospaced).monospacedDigit())
         .padding(.vertical, 4)
+        .padding(.horizontal, 8)
     }
 
     private func formatAmount(_ value: Double?) -> String {
@@ -121,7 +128,7 @@ struct ComparisonTableCard: View {
     }
 
     private func deltaColor(_ value: Double?) -> Color {
-        guard let v = value else { return .primary }
-        return v >= 0 ? .teal : .red
+        guard let v = value else { return .arveeInk }
+        return v >= 0 ? .arveeTeal : .arveeDanger
     }
 }

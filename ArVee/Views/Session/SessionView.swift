@@ -6,21 +6,25 @@ struct SessionView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 24) {
-                if let error = viewModel.errorMessage {
-                    StatusBanner(message: error, type: .error)
-                }
+            ScrollView {
+                VStack(spacing: 24) {
+                    if let error = viewModel.errorMessage {
+                        StatusBanner(message: error, type: .error)
+                    }
 
-                if let sessionId = viewModel.sessionId {
-                    activeSessionSection(sessionId: sessionId)
-                } else {
-                    noSessionSection
+                    if let sessionId = viewModel.sessionId {
+                        activeSessionSection(sessionId: sessionId)
+                    } else {
+                        noSessionSection
+                    }
                 }
-
-                Spacer()
+                .padding(.top, 8)
+                .padding(.bottom, 32)
             }
-            .padding(.top)
+            .arveePageBackground()
             .navigationTitle("Session")
+            .toolbarBackground(Color.arveePaper, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
             .overlay {
                 if viewModel.isLoading {
                     LoadingOverlay(message: "Loading session...")
@@ -32,40 +36,56 @@ struct SessionView: View {
     // MARK: - No Session
 
     private var noSessionSection: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 24) {
             Image(systemName: "folder.badge.questionmark")
-                .font(.system(size: 60))
-                .foregroundColor(.secondary)
+                .font(.system(size: 56))
+                .foregroundColor(.arveeInkMuted)
+                .padding(.top, 20)
 
             Text("No Active Session")
-                .font(.title2.weight(.semibold))
+                .font(.arveeBrand(22))
+                .foregroundColor(.arveeInk)
+
+            Text("Create a new session or load an existing one to get started.")
+                .font(.subheadline)
+                .foregroundColor(.arveeInkMuted)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 32)
 
             Button {
                 Task { await viewModel.createSession() }
             } label: {
                 Label("Create New Session", systemImage: "plus.circle.fill")
-                    .frame(maxWidth: .infinity)
             }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
-            .padding(.horizontal, 40)
+            .buttonStyle(ArveePrimaryButtonStyle())
+            .padding(.horizontal, 32)
 
             dividerWithText("OR")
 
-            HStack {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("LOAD EXISTING")
+                    .font(.arveeEyebrow())
+                    .foregroundColor(.arveeInkMuted)
+                    .tracking(1)
+
                 TextField("Enter Session ID", text: $manualSessionId)
-                    .textFieldStyle(.roundedBorder)
+                    .textFieldStyle(ArveeTextFieldStyle())
                     .textInputAutocapitalization(.never)
 
-                Button("Load") {
+                Button {
                     let id = manualSessionId.trimmingCharacters(in: .whitespaces)
                     guard !id.isEmpty else { return }
                     Task { await viewModel.loadSession(id: id) }
+                } label: {
+                    Text("Load Session")
+                        .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.bordered)
+                .buttonStyle(ArveeSecondaryButtonStyle())
                 .disabled(manualSessionId.trimmingCharacters(in: .whitespaces).isEmpty)
             }
-            .padding(.horizontal, 32)
+            .padding(16)
+            .arveeCard()
+            .padding(.horizontal, 24)
         }
     }
 
@@ -73,58 +93,73 @@ struct SessionView: View {
 
     private func activeSessionSection(sessionId: String) -> some View {
         VStack(spacing: 16) {
-            HStack {
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundColor(.green)
-                    .font(.title2)
-                VStack(alignment: .leading) {
+            VStack(spacing: 12) {
+                HStack {
+                    Circle()
+                        .fill(Color.arveeTeal)
+                        .frame(width: 10, height: 10)
                     Text("Active Session")
-                        .font(.headline)
-                    Text(sessionId)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .lineLimit(1)
+                        .font(.arveeHeadline())
+                        .foregroundColor(.arveeInk)
+                    Spacer()
+                    Button {
+                        viewModel.clear()
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.title3)
+                            .foregroundColor(.arveeDanger.opacity(0.7))
+                    }
                 }
-                Spacer()
-                Button(role: .destructive) {
-                    viewModel.clear()
-                } label: {
-                    Image(systemName: "xmark.circle")
-                }
-            }
-            .padding()
-            .background(Color(.secondarySystemBackground))
-            .cornerRadius(12)
-            .padding(.horizontal)
 
-            if !viewModel.transactions.isEmpty {
-                inputSummary(label: "Transactions", count: viewModel.transactions.count)
+                HStack {
+                    Text(sessionId)
+                        .font(.arveeMono(.caption))
+                        .foregroundColor(.arveeInkMuted)
+                        .lineLimit(1)
+                    Spacer()
+                }
+
+                Divider().overlay(Color.arveeLine)
+
+                if !viewModel.transactions.isEmpty {
+                    inputSummary(label: "Transactions", count: viewModel.transactions.count, icon: "doc.text")
+                }
+                if !viewModel.proofs.isEmpty {
+                    inputSummary(label: "Proofs", count: viewModel.proofs.count, icon: "receipt")
+                }
             }
-            if !viewModel.proofs.isEmpty {
-                inputSummary(label: "Proofs", count: viewModel.proofs.count)
-            }
+            .padding(16)
+            .arveeCard()
+            .padding(.horizontal, 24)
         }
     }
 
-    private func inputSummary(label: String, count: Int) -> some View {
+    private func inputSummary(label: String, count: Int, icon: String) -> some View {
         HStack {
+            Image(systemName: icon)
+                .font(.subheadline)
+                .foregroundColor(.arveeTeal)
             Text(label)
-                .font(.subheadline.weight(.medium))
+                .font(.system(.subheadline, design: .rounded).weight(.medium))
+                .foregroundColor(.arveeInk)
             Spacer()
             Text("\(count) items")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
+                .font(.system(.caption, design: .rounded).weight(.medium))
+                .foregroundColor(.arveeTeal)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 3)
+                .background(Color.arveeTeal.opacity(0.1))
+                .cornerRadius(999)
         }
-        .padding(.horizontal, 24)
     }
 
     private func dividerWithText(_ text: String) -> some View {
         HStack {
-            Rectangle().fill(Color.secondary.opacity(0.3)).frame(height: 1)
+            Rectangle().fill(Color.arveeLine).frame(height: 1)
             Text(text)
-                .font(.caption)
-                .foregroundColor(.secondary)
-            Rectangle().fill(Color.secondary.opacity(0.3)).frame(height: 1)
+                .font(.arveeEyebrow())
+                .foregroundColor(.arveeInkMuted)
+            Rectangle().fill(Color.arveeLine).frame(height: 1)
         }
         .padding(.horizontal, 40)
     }
