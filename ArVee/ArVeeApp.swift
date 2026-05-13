@@ -8,7 +8,7 @@ struct ArVeeApp: App {
         if let saved = UserDefaults.standard.string(forKey: key), !saved.isEmpty {
             APIService.shared.baseURL = saved
         } else {
-            let defaultURL = "http://192.168.1.100:7860"
+            let defaultURL = "http://192.168.4.54:7860"
             UserDefaults.standard.set(defaultURL, forKey: key)
             APIService.shared.baseURL = defaultURL
         }

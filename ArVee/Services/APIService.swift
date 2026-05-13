@@ -5,7 +5,7 @@ final class APIService {
     static let shared = APIService()
 
     /// Base URL for the Flask backend. Update this to your server address.
-    var baseURL = "http://192.168.1.100:7860"
+    var baseURL = "http://192.168.4.54:7860"
 
     private let session: URLSession
     private let decoder: JSONDecoder
