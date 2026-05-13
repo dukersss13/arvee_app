@@ -1,6 +1,7 @@
 import Foundation
 import SwiftUI
 import PhotosUI
+import UniformTypeIdentifiers
 
 @MainActor
 final class ValidationViewModel: ObservableObject {
@@ -14,15 +15,37 @@ final class ValidationViewModel: ObservableObject {
     @Published var recommendations: [ResultRow] = []
     @Published var selectedTab: ResultTab = .validated
 
-    // File selection
+    // Photo selection
     @Published var transactionPhotos: [PhotosPickerItem] = []
     @Published var proofPhotos: [PhotosPickerItem] = []
+
+    // Document selection (PDF/CSV)
+    @Published var transactionDocumentURLs: [URL] = []
+    @Published var proofDocumentURLs: [URL] = []
+
+    // Merged payloads (photos + documents)
     @Published var transactionFiles: [FilePayload] = []
     @Published var proofFiles: [FilePayload] = []
 
     private let api = APIService.shared
 
     var hasResults: Bool { !validatedRows.isEmpty || !discrepancies.isEmpty }
+
+    var hasTransactionFiles: Bool {
+        !transactionPhotos.isEmpty || !transactionDocumentURLs.isEmpty
+    }
+
+    var hasProofFiles: Bool {
+        !proofPhotos.isEmpty || !proofDocumentURLs.isEmpty
+    }
+
+    var totalTransactionCount: Int {
+        transactionPhotos.count + transactionDocumentURLs.count
+    }
+
+    var totalProofCount: Int {
+        proofPhotos.count + proofDocumentURLs.count
+    }
 
     enum ResultTab: String, CaseIterable {
         case validated = "Validated"
@@ -52,9 +75,15 @@ final class ValidationViewModel: ObservableObject {
         isValidating = false
     }
 
-    func loadPhotos() async {
-        transactionFiles = await loadPayloads(from: transactionPhotos)
-        proofFiles = await loadPayloads(from: proofPhotos)
+    /// Load all selected files (photos + documents) into payloads for upload.
+    func loadAllFiles() async {
+        let photoTx = await loadPayloads(from: transactionPhotos)
+        let docTx = loadDocuments(from: transactionDocumentURLs)
+        transactionFiles = photoTx + docTx
+
+        let photoProof = await loadPayloads(from: proofPhotos)
+        let docProof = loadDocuments(from: proofDocumentURLs)
+        proofFiles = photoProof + docProof
     }
 
     private func loadPayloads(from items: [PhotosPickerItem]) async -> [FilePayload] {
@@ -68,6 +97,44 @@ final class ValidationViewModel: ObservableObject {
         return payloads
     }
 
+    private func loadDocuments(from urls: [URL]) -> [FilePayload] {
+        var payloads: [FilePayload] = []
+        for url in urls {
+            guard url.startAccessingSecurityScopedResource() else { continue }
+            defer { url.stopAccessingSecurityScopedResource() }
+            guard let data = try? Data(contentsOf: url) else { continue }
+            let ext = url.pathExtension.lowercased()
+            let mime: String
+            switch ext {
+            case "pdf": mime = "application/pdf"
+            case "csv": mime = "text/csv"
+            default: mime = "application/octet-stream"
+            }
+            payloads.append(FilePayload(filename: url.lastPathComponent, data: data, mimeType: mime))
+        }
+        return payloads
+    }
+
+    func removeTransactionPhoto(at index: Int) {
+        guard index < transactionPhotos.count else { return }
+        transactionPhotos.remove(at: index)
+    }
+
+    func removeTransactionDocument(at index: Int) {
+        guard index < transactionDocumentURLs.count else { return }
+        transactionDocumentURLs.remove(at: index)
+    }
+
+    func removeProofPhoto(at index: Int) {
+        guard index < proofPhotos.count else { return }
+        proofPhotos.remove(at: index)
+    }
+
+    func removeProofDocument(at index: Int) {
+        guard index < proofDocumentURLs.count else { return }
+        proofDocumentURLs.remove(at: index)
+    }
+
     func clear() {
         summary = nil
         validatedRows = []
@@ -77,6 +144,8 @@ final class ValidationViewModel: ObservableObject {
         recommendations = []
         transactionPhotos = []
         proofPhotos = []
+        transactionDocumentURLs = []
+        proofDocumentURLs = []
         transactionFiles = []
         proofFiles = []
         errorMessage = nil

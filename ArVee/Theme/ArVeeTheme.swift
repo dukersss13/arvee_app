@@ -40,6 +40,20 @@ extension Color {
     // Table header background — matches web #f4ebda
     static let arveeTableHead = Color(light: .init(hex: 0xF4EBDA), dark: .init(hex: 0x2E2924))
 
+    // Success green — positive states
+    static let arveeSuccess = Color(light: .init(hex: 0x34A853), dark: .init(hex: 0x5CB176))
+
+    // Elevated card surface — slightly more opaque than arveeCard
+    static let arveeCardElevated = Color(light: .init(white: 1.0, alpha: 0.94), dark: .init(hex: 0x2A2724, alpha: 0.95))
+
+    // Soft teal background — subtle tint for sections
+    static let arveeTealSoft = Color(light: .init(hex: 0x0F7B6C, alpha: 0.06), dark: .init(hex: 0x2DB8A2, alpha: 0.08))
+
+    // Step indicator colors
+    static let arveeStepComplete = Color(light: .init(hex: 0x0F7B6C), dark: .init(hex: 0x2DB8A2))
+    static let arveeStepActive = Color(light: .init(hex: 0xEA8F58), dark: .init(hex: 0xEA8F58))
+    static let arveeStepPending = Color(light: .init(hex: 0x5A554D, alpha: 0.3), dark: .init(hex: 0xA39B8E, alpha: 0.3))
+
     // MARK: - Chart Palette (matching web SVG colors)
 
     static let arveeChartPalette: [Color] = [

@@ -20,6 +20,16 @@ final class APIService {
 
     // MARK: - Session
 
+    /// Check if the backend is reachable.
+    func healthCheck() async -> Bool {
+        do {
+            _ = try await get(path: "/api/health")
+            return true
+        } catch {
+            return false
+        }
+    }
+
     func createSession() async throws -> String {
         let data = try await post(path: "/api/session/new")
         let response = try decoder.decode(SessionResponse.self, from: data)

@@ -44,4 +44,10 @@ final class SessionViewModel: ObservableObject {
         proofs = []
         errorMessage = nil
     }
+
+    /// Auto-create a session if one doesn't exist yet.
+    func ensureSession() async {
+        guard sessionId == nil else { return }
+        await createSession()
+    }
 }

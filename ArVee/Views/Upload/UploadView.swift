@@ -1,11 +1,32 @@
 import SwiftUI
 import PhotosUI
+import UniformTypeIdentifiers
 
 struct UploadView: View {
     @ObservedObject var sessionVM: SessionViewModel
     @ObservedObject var validationVM: ValidationViewModel
-    @State private var loadSessionId = ""
+    @Binding var selectedTab: Int
+
     @State private var showLoadField = false
+    @State private var loadSessionId = ""
+    @State private var showTxDocPicker = false
+    @State private var showProofDocPicker = false
+
+    private var currentStep: StepState {
+        if validationVM.hasResults { return .complete }
+        if validationVM.hasTransactionFiles || validationVM.hasProofFiles { return .active }
+        return .pending
+    }
+
+    private var steps: [(label: String, state: StepState)] {
+        let hasFiles = validationVM.hasTransactionFiles || validationVM.hasProofFiles
+        let hasResults = validationVM.hasResults
+        return [
+            ("Upload", hasFiles || hasResults ? (hasResults ? .complete : .complete) : .active),
+            ("Validate", hasResults ? .complete : (hasFiles ? .active : .pending)),
+            ("Review", hasResults ? .active : .pending),
+        ]
+    }
 
     var body: some View {
         NavigationStack {
@@ -16,111 +37,74 @@ struct UploadView: View {
                         StatusBanner(message: error, type: .error)
                     }
 
-                    // Session bar (compact)
-                    sessionBar
+                    // Step indicator
+                    StepIndicator(steps: steps)
+                        .padding(.horizontal, 4)
 
-                    if sessionVM.hasSession {
-                        // Upload cards
-                        uploadSection
+                    // Upload cards (always visible)
+                    uploadSection
 
-                        // Actions
-                        actionButtons
-
-                        // Progress
-                        if validationVM.isValidating {
-                            validatingIndicator
-                        }
+                    // Validate button
+                    if validationVM.hasTransactionFiles || validationVM.hasProofFiles {
+                        validateButton
                     }
+
+                    // Validating indicator
+                    if validationVM.isValidating {
+                        validatingOverlay
+                    }
+
+                    // Success state
+                    if validationVM.hasResults {
+                        successCard
+                    }
+
+                    // Session management (collapsed)
+                    sessionFooter
+
+                    Spacer(minLength: 32)
                 }
                 .padding(.top, 8)
-                .padding(.bottom, 32)
+                .padding(.bottom, 24)
             }
             .arveePageBackground()
             .navigationTitle("Upload")
             .navigationBarTitleDisplayMode(.large)
             .toolbarBackground(Color.arveePaper, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
-        }
-    }
-
-    // MARK: - Session Bar
-
-    private var sessionBar: some View {
-        VStack(spacing: 12) {
-            if let sessionId = sessionVM.sessionId {
-                // Active session row
-                HStack(spacing: 10) {
-                    Circle()
-                        .fill(Color.arveeTeal)
-                        .frame(width: 8, height: 8)
-                    Text("Session")
-                        .font(.system(.caption, design: .rounded).weight(.semibold))
-                        .foregroundColor(.arveeInkMuted)
-                    Text(sessionId)
-                        .font(.arveeMono(.caption2))
-                        .foregroundColor(.arveeInk)
-                        .lineLimit(1)
-                        .truncationMode(.middle)
-                    Spacer()
-                    Button {
-                        sessionVM.clear()
-                        validationVM.clear()
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.body)
-                            .foregroundColor(.arveeInkMuted)
-                    }
-                }
-            } else {
-                // No session — create or load
-                HStack(spacing: 10) {
-                    Button {
-                        Task { await sessionVM.createSession() }
-                    } label: {
-                        Label("New Session", systemImage: "plus.circle.fill")
-                            .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                    }
-                    .buttonStyle(ArveePrimaryCompactButtonStyle())
-
-                    Button {
-                        withAnimation(.easeInOut(duration: 0.2)) {
-                            showLoadField.toggle()
+            .toolbar {
+                if sessionVM.hasSession {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        HStack(spacing: 4) {
+                            Circle()
+                                .fill(Color.arveeSuccess)
+                                .frame(width: 6, height: 6)
+                            Text(sessionVM.sessionId?.prefix(8) ?? "")
+                                .font(.arveeMono(.caption2))
+                                .foregroundColor(.arveeInkMuted)
                         }
-                    } label: {
-                        Label("Load", systemImage: "tray.and.arrow.down")
-                            .font(.system(.subheadline, design: .rounded).weight(.medium))
-                    }
-                    .buttonStyle(ArveeMutedCompactButtonStyle())
-                }
-
-                if showLoadField {
-                    HStack(spacing: 8) {
-                        TextField("Paste session ID", text: $loadSessionId)
-                            .textFieldStyle(ArveeTextFieldStyle())
-                            .textInputAutocapitalization(.never)
-
-                        Button {
-                            let id = loadSessionId.trimmingCharacters(in: .whitespaces)
-                            guard !id.isEmpty else { return }
-                            Task { await sessionVM.loadSession(id: id) }
-                        } label: {
-                            Image(systemName: "arrow.right.circle.fill")
-                                .font(.title3)
-                                .foregroundStyle(Color.arveeTealGradient)
-                        }
-                        .disabled(loadSessionId.trimmingCharacters(in: .whitespaces).isEmpty)
                     }
                 }
             }
-
-            if sessionVM.isLoading {
-                ProgressView()
-                    .tint(.arveeTeal)
+            .fileImporter(
+                isPresented: $showTxDocPicker,
+                allowedContentTypes: [.pdf, .commaSeparatedText],
+                allowsMultipleSelection: true
+            ) { result in
+                if case .success(let urls) = result {
+                    validationVM.transactionDocumentURLs.append(contentsOf: urls)
+                }
+            }
+            .fileImporter(
+                isPresented: $showProofDocPicker,
+                allowedContentTypes: [.pdf, .commaSeparatedText, .image],
+                allowsMultipleSelection: true
+            ) { result in
+                if case .success(let urls) = result {
+                    validationVM.proofDocumentURLs.append(contentsOf: urls)
+                }
             }
         }
-        .padding(14)
-        .arveeCard(cornerRadius: 14)
-        .padding(.horizontal, 16)
     }
 
     // MARK: - Upload Section
@@ -130,19 +114,25 @@ struct UploadView: View {
             uploadCard(
                 title: "Transactions",
                 subtitle: "Bank statements or transaction records",
-                icon: "doc.text",
-                badge: "PDF / Image",
-                selection: $validationVM.transactionPhotos,
-                count: validationVM.transactionFiles.count
+                icon: "doc.text.fill",
+                photoSelection: $validationVM.transactionPhotos,
+                documentURLs: validationVM.transactionDocumentURLs,
+                photoCount: validationVM.transactionPhotos.count,
+                onImportFiles: { showTxDocPicker = true },
+                onRemovePhoto: { validationVM.removeTransactionPhoto(at: $0) },
+                onRemoveDocument: { validationVM.removeTransactionDocument(at: $0) }
             )
 
             uploadCard(
                 title: "Proofs",
                 subtitle: "Receipts or proof-of-purchase images",
-                icon: "receipt",
-                badge: "PNG / JPG",
-                selection: $validationVM.proofPhotos,
-                count: validationVM.proofFiles.count
+                icon: "receipt.fill",
+                photoSelection: $validationVM.proofPhotos,
+                documentURLs: validationVM.proofDocumentURLs,
+                photoCount: validationVM.proofPhotos.count,
+                onImportFiles: { showProofDocPicker = true },
+                onRemovePhoto: { validationVM.removeProofPhoto(at: $0) },
+                onRemoveDocument: { validationVM.removeProofDocument(at: $0) }
             )
         }
     }
@@ -151,50 +141,100 @@ struct UploadView: View {
         title: String,
         subtitle: String,
         icon: String,
-        badge: String,
-        selection: Binding<[PhotosPickerItem]>,
-        count: Int
+        photoSelection: Binding<[PhotosPickerItem]>,
+        documentURLs: [URL],
+        photoCount: Int,
+        onImportFiles: @escaping () -> Void,
+        onRemovePhoto: @escaping (Int) -> Void,
+        onRemoveDocument: @escaping (Int) -> Void
     ) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Image(systemName: icon)
-                    .font(.title3)
-                    .foregroundColor(.arveeTeal)
+        VStack(alignment: .leading, spacing: 14) {
+            // Header
+            HStack(spacing: 10) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(Color.arveeTealSoft)
+                        .frame(width: 40, height: 40)
+                    Image(systemName: icon)
+                        .font(.body)
+                        .foregroundColor(.arveeTeal)
+                }
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
                         .font(.system(.headline, design: .rounded))
                         .foregroundColor(.arveeInk)
                     Text(subtitle)
-                        .font(.caption)
+                        .font(.system(.caption, design: .rounded))
                         .foregroundColor(.arveeInkMuted)
                 }
                 Spacer()
-                Text(badge)
-                    .font(.system(.caption2, design: .rounded).weight(.medium))
-                    .foregroundColor(.arveeTeal)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 3)
-                    .background(Color.arveeTeal.opacity(0.08))
-                    .cornerRadius(6)
+                let total = photoCount + documentURLs.count
+                if total > 0 {
+                    Text("\(total) file\(total == 1 ? "" : "s")")
+                        .font(.system(.caption, design: .rounded).weight(.semibold))
+                        .foregroundColor(.arveeTeal)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color.arveeTealSoft)
+                        .cornerRadius(8)
+                }
             }
 
-            PhotosPicker(
-                selection: selection,
-                maxSelectionCount: 20,
-                matching: .images
-            ) {
-                HStack {
-                    Image(systemName: "arrow.up.doc")
-                        .font(.subheadline)
-                    Text(count > 0 ? "\(count) selected — tap to change" : "Select photos")
+            // Picker buttons
+            HStack(spacing: 10) {
+                PhotosPicker(
+                    selection: photoSelection,
+                    maxSelectionCount: 20,
+                    matching: .images
+                ) {
+                    Label("Photos", systemImage: "photo.on.rectangle")
                         .font(.system(.subheadline, design: .rounded).weight(.medium))
+                        .foregroundColor(.arveeTeal)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(Color.arveeTealSoft)
+                        .cornerRadius(12)
+                        .arveeDashedBorder()
                 }
-                .foregroundColor(.arveeTeal)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 16)
-                .background(Color.arveeCard.opacity(0.6))
-                .cornerRadius(12)
-                .arveeDashedBorder()
+
+                Button(action: onImportFiles) {
+                    Label("Files", systemImage: "folder")
+                        .font(.system(.subheadline, design: .rounded).weight(.medium))
+                        .foregroundColor(.arveeCoral)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(Color.arveeCoral.opacity(0.06))
+                        .cornerRadius(12)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.arveeCoral.opacity(0.4), style: StrokeStyle(lineWidth: 1.5, dash: [8, 5]))
+                        )
+                }
+            }
+
+            // Selected files list
+            let hasItems = photoCount > 0 || !documentURLs.isEmpty
+            if hasItems {
+                VStack(spacing: 6) {
+                    // Photo items
+                    ForEach(0..<photoCount, id: \.self) { idx in
+                        ArveeFileRow(
+                            filename: "Photo \(idx + 1).jpg",
+                            subtitle: "From photo library"
+                        ) {
+                            onRemovePhoto(idx)
+                        }
+                    }
+                    // Document items
+                    ForEach(Array(documentURLs.enumerated()), id: \.offset) { idx, url in
+                        ArveeFileRow(
+                            filename: url.lastPathComponent,
+                            subtitle: url.pathExtension.uppercased()
+                        ) {
+                            onRemoveDocument(idx)
+                        }
+                    }
+                }
             }
         }
         .padding(16)
@@ -202,77 +242,118 @@ struct UploadView: View {
         .padding(.horizontal, 16)
     }
 
-    // MARK: - Action Buttons
+    // MARK: - Validate Button
 
-    private var actionButtons: some View {
-        VStack(spacing: 10) {
-            Button {
+    private var validateButton: some View {
+        Button {
+            Task {
+                await sessionVM.ensureSession()
                 guard let sessionId = sessionVM.sessionId else { return }
-                Task {
-                    await validationVM.loadPhotos()
-                    await validationVM.validate(sessionId: sessionId)
+                await validationVM.loadAllFiles()
+                await validationVM.validate(sessionId: sessionId)
+            }
+        } label: {
+            Label("Run Validation", systemImage: "checkmark.shield.fill")
+        }
+        .buttonStyle(ArveePrimaryButtonStyle())
+        .disabled(validationVM.isValidating)
+        .padding(.horizontal, 24)
+    }
+
+    // MARK: - Validating Overlay
+
+    private var validatingOverlay: some View {
+        VStack(spacing: 14) {
+            ProgressView()
+                .controlSize(.large)
+                .tint(.arveeTeal)
+            Text("Validating your files...")
+                .font(.system(.subheadline, design: .rounded).weight(.medium))
+                .foregroundColor(.arveeInk)
+            Text("This may take a moment while we process your documents")
+                .font(.caption)
+                .foregroundColor(.arveeInkMuted)
+                .multilineTextAlignment(.center)
+        }
+        .padding(24)
+        .frame(maxWidth: .infinity)
+        .arveeGradientCard(accent: .arveeTeal, cornerRadius: 16)
+        .padding(.horizontal, 16)
+    }
+
+    // MARK: - Success Card
+
+    private var successCard: some View {
+        VStack(spacing: 14) {
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 44))
+                .foregroundColor(.arveeSuccess)
+            Text("Validation Complete")
+                .font(.system(.headline, design: .rounded))
+                .foregroundColor(.arveeInk)
+            Text("\(validationVM.validatedRows.count) validated · \(validationVM.discrepancies.count) discrepancies")
+                .font(.system(.subheadline, design: .rounded))
+                .foregroundColor(.arveeInkMuted)
+            Button {
+                withAnimation(.spring(response: 0.3)) {
+                    selectedTab = 2
                 }
             } label: {
-                Label("Run Validation", systemImage: "checkmark.shield.fill")
+                Label("View Results", systemImage: "arrow.right")
             }
             .buttonStyle(ArveePrimaryButtonStyle())
-            .disabled(
-                validationVM.transactionPhotos.isEmpty && validationVM.proofPhotos.isEmpty
-            )
 
             Button {
                 validationVM.clear()
             } label: {
-                Label("Clear All", systemImage: "xmark.circle")
-                    .frame(maxWidth: .infinity)
+                Text("Start New")
+                    .font(.system(.subheadline, design: .rounded).weight(.medium))
+                    .foregroundColor(.arveeInkMuted)
             }
-            .buttonStyle(ArveeTertiaryButtonStyle())
         }
-        .padding(.horizontal, 24)
-    }
-
-    // MARK: - Validating Indicator
-
-    private var validatingIndicator: some View {
-        HStack(spacing: 10) {
-            ProgressView()
-                .tint(.arveeTeal)
-            Text("Validating receipts...")
-                .font(.system(.subheadline, design: .rounded))
-                .foregroundColor(.arveeInkMuted)
-        }
-        .padding(14)
+        .padding(24)
         .frame(maxWidth: .infinity)
-        .background(Color.arveeMint.opacity(0.3))
-        .cornerRadius(12)
+        .arveeGradientCard(accent: .arveeSuccess, cornerRadius: 16)
         .padding(.horizontal, 16)
     }
-}
 
-// MARK: - Compact Button Styles
+    // MARK: - Session Footer
 
-struct ArveePrimaryCompactButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .foregroundColor(.white)
-            .padding(.vertical, 8)
-            .padding(.horizontal, 14)
-            .background(Color.arveeTealGradient)
-            .cornerRadius(10)
-            .scaleEffect(configuration.isPressed ? 0.96 : 1.0)
-            .animation(.easeInOut(duration: 0.12), value: configuration.isPressed)
-    }
-}
+    private var sessionFooter: some View {
+        VStack(spacing: 8) {
+            Button {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    showLoadField.toggle()
+                }
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: "tray.and.arrow.down")
+                        .font(.caption)
+                    Text("Load existing session")
+                        .font(.system(.caption, design: .rounded))
+                }
+                .foregroundColor(.arveeInkMuted)
+            }
 
-struct ArveeMutedCompactButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .foregroundColor(.arveeTealDark)
-            .padding(.vertical, 8)
-            .padding(.horizontal, 14)
-            .background(Color.arveeMint.opacity(0.5))
-            .cornerRadius(10)
-            .scaleEffect(configuration.isPressed ? 0.96 : 1.0)
-            .animation(.easeInOut(duration: 0.12), value: configuration.isPressed)
+            if showLoadField {
+                HStack(spacing: 8) {
+                    TextField("Paste session ID", text: $loadSessionId)
+                        .textFieldStyle(ArveeTextFieldStyle())
+                        .textInputAutocapitalization(.never)
+                    Button {
+                        let id = loadSessionId.trimmingCharacters(in: .whitespaces)
+                        guard !id.isEmpty else { return }
+                        Task { await sessionVM.loadSession(id: id) }
+                    } label: {
+                        Image(systemName: "arrow.right.circle.fill")
+                            .font(.title3)
+                            .foregroundStyle(Color.arveeTealGradient)
+                    }
+                    .disabled(loadSessionId.trimmingCharacters(in: .whitespaces).isEmpty)
+                }
+                .padding(.horizontal, 16)
+            }
+        }
+        .padding(.top, 8)
     }
 }

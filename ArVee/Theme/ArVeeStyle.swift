@@ -195,3 +195,202 @@ extension View {
         modifier(ArveeDashedBorder(cornerRadius: cornerRadius))
     }
 }
+
+// MARK: - Gradient Accent Card (top-edge tinted card)
+
+struct ArveeGradientCardModifier: ViewModifier {
+    var accentColor: Color = .arveeTeal
+    var cornerRadius: CGFloat = 16
+
+    func body(content: Content) -> some View {
+        content
+            .background(
+                ZStack(alignment: .top) {
+                    Color.arveeCard
+                    LinearGradient(
+                        colors: [accentColor.opacity(0.12), accentColor.opacity(0.0)],
+                        startPoint: .top,
+                        endPoint: .center
+                    )
+                }
+            )
+            .cornerRadius(cornerRadius)
+            .overlay(
+                RoundedRectangle(cornerRadius: cornerRadius)
+                    .stroke(Color.arveeLine, lineWidth: 0.5)
+            )
+            .shadow(color: Color.arveeInk.opacity(0.08), radius: 12, x: 0, y: 4)
+    }
+}
+
+extension View {
+    func arveeGradientCard(accent: Color = .arveeTeal, cornerRadius: CGFloat = 16) -> some View {
+        modifier(ArveeGradientCardModifier(accentColor: accent, cornerRadius: cornerRadius))
+    }
+}
+
+// MARK: - Step Indicator
+
+enum StepState {
+    case pending, active, complete
+}
+
+struct StepIndicator: View {
+    let steps: [(label: String, state: StepState)]
+
+    var body: some View {
+        HStack(spacing: 0) {
+            ForEach(Array(steps.enumerated()), id: \.offset) { idx, step in
+                HStack(spacing: 6) {
+                    ZStack {
+                        Circle()
+                            .fill(fillColor(for: step.state))
+                            .frame(width: 28, height: 28)
+                        if step.state == .complete {
+                            Image(systemName: "checkmark")
+                                .font(.caption.weight(.bold))
+                                .foregroundColor(.white)
+                        } else {
+                            Text("\(idx + 1)")
+                                .font(.system(size: 13, weight: .bold, design: .rounded))
+                                .foregroundColor(step.state == .active ? .white : .arveeInkMuted)
+                        }
+                    }
+                    Text(step.label)
+                        .font(.system(size: 12, weight: step.state == .active ? .semibold : .medium, design: .rounded))
+                        .foregroundColor(step.state == .pending ? .arveeInkMuted : .arveeInk)
+                }
+
+                if idx < steps.count - 1 {
+                    lineSegment(completed: step.state == .complete)
+                }
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+    }
+
+    private func fillColor(for state: StepState) -> Color {
+        switch state {
+        case .complete: return .arveeStepComplete
+        case .active: return .arveeStepActive
+        case .pending: return .arveeStepPending
+        }
+    }
+
+    private func lineSegment(completed: Bool) -> some View {
+        Rectangle()
+            .fill(completed ? Color.arveeStepComplete : Color.arveeStepPending)
+            .frame(height: 2)
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, 4)
+    }
+}
+
+// MARK: - File Row (selected file with remove button)
+
+struct ArveeFileRow: View {
+    let filename: String
+    let subtitle: String?
+    let onRemove: () -> Void
+
+    init(filename: String, subtitle: String? = nil, onRemove: @escaping () -> Void) {
+        self.filename = filename
+        self.subtitle = subtitle
+        self.onRemove = onRemove
+    }
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: fileIcon)
+                .font(.body)
+                .foregroundColor(.arveeTeal)
+                .frame(width: 32, height: 32)
+                .background(Color.arveeTealSoft)
+                .cornerRadius(8)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(filename)
+                    .font(.system(.subheadline, design: .rounded))
+                    .foregroundColor(.arveeInk)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                if let subtitle {
+                    Text(subtitle)
+                        .font(.caption2)
+                        .foregroundColor(.arveeInkMuted)
+                }
+            }
+            Spacer()
+            Button(action: onRemove) {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.body)
+                    .foregroundColor(.arveeInkMuted)
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(Color.arveeSand.opacity(0.25))
+        .cornerRadius(10)
+    }
+
+    private var fileIcon: String {
+        let ext = (filename as NSString).pathExtension.lowercased()
+        switch ext {
+        case "pdf": return "doc.richtext"
+        case "csv": return "tablecells"
+        case "jpg", "jpeg", "png", "heic": return "photo"
+        default: return "doc"
+        }
+    }
+}
+
+// MARK: - Pill Button Style (for suggestion chips)
+
+struct ArveePillButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(.subheadline, design: .rounded).weight(.medium))
+            .foregroundColor(.arveeTeal)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 8)
+            .background(Color.arveeTealSoft)
+            .cornerRadius(20)
+            .overlay(
+                RoundedRectangle(cornerRadius: 20)
+                    .stroke(Color.arveeTeal.opacity(0.15), lineWidth: 0.5)
+            )
+            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
+            .animation(.easeInOut(duration: 0.12), value: configuration.isPressed)
+    }
+}
+
+// MARK: - Metric Card (dashboard KPI)
+
+struct ArveeMetricCard: View {
+    let title: String
+    let value: String
+    let icon: String
+    var accentColor: Color = .arveeTeal
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text(title.uppercased())
+                    .font(.system(size: 10, weight: .semibold, design: .rounded))
+                    .foregroundColor(.arveeInkMuted)
+                    .tracking(0.5)
+                Spacer()
+                Image(systemName: icon)
+                    .font(.caption)
+                    .foregroundColor(accentColor.opacity(0.6))
+            }
+            Text(value)
+                .font(.system(size: 32, weight: .bold, design: .rounded))
+                .foregroundColor(.arveeInk)
+                .contentTransition(.numericText())
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .arveeGradientCard(accent: accentColor, cornerRadius: 14)
+    }
+}
