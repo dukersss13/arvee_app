@@ -3,9 +3,14 @@ import SwiftUI
 @main
 struct ArVeeApp: App {
     init() {
-        // Load saved API URL from UserDefaults
-        if let saved = UserDefaults.standard.string(forKey: "apiBaseURL"), !saved.isEmpty {
+        // Ensure API URL is set on launch — write default if not yet saved
+        let key = "apiBaseURL"
+        if let saved = UserDefaults.standard.string(forKey: key), !saved.isEmpty {
             APIService.shared.baseURL = saved
+        } else {
+            let defaultURL = "http://localhost:7860"
+            UserDefaults.standard.set(defaultURL, forKey: key)
+            APIService.shared.baseURL = defaultURL
         }
 
         // Global appearance: warm paper theme

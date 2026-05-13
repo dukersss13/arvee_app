@@ -16,14 +16,16 @@ final class ChatViewModel: ObservableObject {
 
         let userMsg = ChatMessage(
             role: .user, text: text, isPending: false,
-            chart: nil, topCategories: nil, comparisonTable: nil
+            chart: nil, topCategories: nil, comparisonTable: nil,
+            quickReplies: nil
         )
         messages.append(userMsg)
         inputText = ""
 
         let assistantMsg = ChatMessage(
             role: .assistant, text: "", isPending: true,
-            chart: nil, topCategories: nil, comparisonTable: nil
+            chart: nil, topCategories: nil, comparisonTable: nil,
+            quickReplies: nil
         )
         messages.append(assistantMsg)
         let assistantIndex = messages.count - 1
@@ -51,6 +53,7 @@ final class ChatViewModel: ObservableObject {
 
             self.messages[assistantIndex].chart = response.chart
             self.messages[assistantIndex].topCategories = response.topCategories
+            self.messages[assistantIndex].quickReplies = response.quickReplies
 
             // Comparison table can come from the chart or from the top-level field
             if let table = response.comparisonTable {

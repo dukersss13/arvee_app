@@ -8,6 +8,7 @@ struct ChatMessage: Identifiable {
     var chart: ChartData?
     var topCategories: [CategoryValue]?
     var comparisonTable: ComparisonTable?
+    var quickReplies: [String]?
 
     enum Role: String {
         case user, assistant
@@ -27,11 +28,12 @@ struct ChatAskResponse: Codable {
     let chart: ChartData?
     let topCategories: [CategoryValue]?
     let comparisonTable: ComparisonTable?
+    let quickReplies: [String]?
 
     enum CodingKeys: String, CodingKey {
         case sessionId, question, answer, rowsScanned, toolUsed
         case confidence, route, toolName, needsClarification
-        case chart
+        case chart, quickReplies
         case topCategories = "top_categories"
         case comparisonTable = "comparison_table"
     }

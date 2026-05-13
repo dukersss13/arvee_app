@@ -66,6 +66,7 @@ struct ValidationView: View {
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     // MARK: - Empty Results
@@ -89,6 +90,7 @@ struct ValidationView: View {
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     // MARK: - Results

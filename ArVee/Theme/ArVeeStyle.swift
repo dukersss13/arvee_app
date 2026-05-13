@@ -259,7 +259,9 @@ struct StepIndicator: View {
                     Text(step.label)
                         .font(.system(size: 12, weight: step.state == .active ? .semibold : .medium, design: .rounded))
                         .foregroundColor(step.state == .pending ? .arveeInkMuted : .arveeInk)
+                        .fixedSize(horizontal: true, vertical: false)
                 }
+                .fixedSize()
 
                 if idx < steps.count - 1 {
                     lineSegment(completed: step.state == .complete)

@@ -80,7 +80,8 @@ final class SSEClient: NSObject, URLSessionDataDelegate {
                             question: nil, answer: answer, rowsScanned: nil,
                             toolUsed: nil, confidence: nil, route: nil,
                             toolName: nil, needsClarification: nil,
-                            chart: nil, topCategories: nil, comparisonTable: nil
+                            chart: nil, topCategories: nil, comparisonTable: nil,
+                            quickReplies: json["quickReplies"] as? [String]
                         )
                         onDone?(fallback)
                     }

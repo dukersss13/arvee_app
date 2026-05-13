@@ -71,6 +71,7 @@ struct ChatView: View {
             .buttonStyle(ArveePrimaryButtonStyle())
             .padding(.horizontal, 48)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     // MARK: - Welcome View (session active, no messages)
@@ -154,6 +155,28 @@ struct ChatView: View {
                 .onChange(of: viewModel.messages.last?.text) { _, _ in
                     scrollToBottom(proxy)
                 }
+            }
+
+            // Quick replies after last assistant message
+            if !viewModel.isStreaming,
+               let replies = viewModel.messages.last?.quickReplies,
+               !replies.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(replies, id: \.self) { reply in
+                            Button {
+                                viewModel.inputText = reply
+                                send()
+                            } label: {
+                                Text(reply)
+                            }
+                            .buttonStyle(ArveePillButtonStyle())
+                        }
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                }
+                .background(Color.arveePaper.opacity(0.95))
             }
 
             Divider().overlay(Color.arveeLine)
