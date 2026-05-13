@@ -48,30 +48,35 @@ struct ChatView: View {
     // MARK: - No Session
 
     private var noSessionPlaceholder: some View {
-        VStack(spacing: 16) {
-            ZStack {
-                Circle()
-                    .fill(Color.arveeTealSoft)
-                    .frame(width: 88, height: 88)
-                Image(systemName: "bubble.left.and.text.bubble.right")
-                    .font(.system(size: 36))
-                    .foregroundStyle(Color.arveeTealGradient)
+        VStack(spacing: 0) {
+            VStack(spacing: 16) {
+                ZStack {
+                    Circle()
+                        .fill(Color.arveeTealSoft)
+                        .frame(width: 88, height: 88)
+                    Image(systemName: "bubble.left.and.text.bubble.right")
+                        .font(.system(size: 36))
+                        .foregroundStyle(Color.arveeTealGradient)
+                }
+                Text("Start a session to chat with ArVee")
+                    .font(.arveeHeadline())
+                    .foregroundColor(.arveeInk)
+                Text("Create a session to get started.")
+                    .font(.subheadline)
+                    .foregroundColor(.arveeInkMuted)
+                Button {
+                    Task { await sessionVM.ensureSession() }
+                } label: {
+                    Label("Create Session", systemImage: "plus.circle.fill")
+                }
+                .buttonStyle(ArveePrimaryButtonStyle())
             }
-            Text("Start a session to chat with ArVee")
-                .font(.arveeHeadline())
-                .foregroundColor(.arveeInk)
-            Text("Create a session to get started.")
-                .font(.subheadline)
-                .foregroundColor(.arveeInkMuted)
-            Button {
-                Task { await sessionVM.ensureSession() }
-            } label: {
-                Label("Create Session", systemImage: "plus.circle.fill")
-            }
-            .buttonStyle(ArveePrimaryButtonStyle())
-            .padding(.horizontal, 48)
+            .padding(22)
+            .arveeCard(cornerRadius: 20)
+            .padding(.horizontal, 20)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .padding(.top, 28)
     }
 
     // MARK: - Welcome View (session active, no messages)
@@ -82,53 +87,55 @@ struct ChatView: View {
                 StatusBanner(message: error, type: .error)
             }
 
-            Spacer()
-
-            VStack(spacing: 16) {
-                ZStack {
-                    Circle()
-                        .fill(Color.arveeTealSoft)
-                        .frame(width: 96, height: 96)
-                    Image(systemName: "bubble.left.and.text.bubble.right")
-                        .font(.system(size: 40))
-                        .foregroundStyle(Color.arveeTealGradient)
-                }
-                .scaleEffect(welcomeScale)
-                .onAppear {
-                    withAnimation(.spring(response: 0.5, dampingFraction: 0.6).delay(0.1)) {
-                        welcomeScale = 1.0
+            ScrollView {
+                VStack(spacing: 16) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.arveeTealSoft)
+                            .frame(width: 96, height: 96)
+                        Image(systemName: "bubble.left.and.text.bubble.right")
+                            .font(.system(size: 40))
+                            .foregroundStyle(Color.arveeTealGradient)
                     }
-                }
-
-                Text("Hi, I'm ArVee!")
-                    .font(.arveeBrand(24))
-                    .foregroundColor(.arveeInk)
-
-                Text("I'm here to help with your finances.\nTry asking me:")
-                    .font(.subheadline)
-                    .foregroundColor(.arveeInkMuted)
-                    .multilineTextAlignment(.center)
-
-                // Pill-style suggestion chips
-                FlowLayout(spacing: 8) {
-                    ForEach(suggestions, id: \.self) { suggestion in
-                        Button {
-                            viewModel.inputText = suggestion
-                            send()
-                        } label: {
-                            Text(suggestion)
+                    .scaleEffect(welcomeScale)
+                    .onAppear {
+                        withAnimation(.spring(response: 0.5, dampingFraction: 0.6).delay(0.1)) {
+                            welcomeScale = 1.0
                         }
-                        .buttonStyle(ArveePillButtonStyle())
                     }
-                }
-                .padding(.horizontal, 20)
-            }
 
-            Spacer()
+                    Text("Hi, I'm ArVee!")
+                        .font(.arveeBrand(24))
+                        .foregroundColor(.arveeInk)
+
+                    Text("I'm here to help with your finances.\nTry asking me:")
+                        .font(.subheadline)
+                        .foregroundColor(.arveeInkMuted)
+                        .multilineTextAlignment(.center)
+
+                    // Pill-style suggestion chips
+                    FlowLayout(spacing: 8) {
+                        ForEach(suggestions, id: \.self) { suggestion in
+                            Button {
+                                viewModel.inputText = suggestion
+                                send()
+                            } label: {
+                                Text(suggestion)
+                            }
+                            .buttonStyle(ArveePillButtonStyle())
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                }
+                .padding(.top, 24)
+                .padding(.bottom, 16)
+                .frame(maxWidth: .infinity, alignment: .top)
+            }
 
             Divider().overlay(Color.arveeLine)
             inputBar
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     // MARK: - Chat Content
@@ -148,6 +155,7 @@ struct ChatView: View {
                         }
                     }
                     .padding(.vertical, 12)
+                    .padding(.horizontal, 6)
                 }
                 .onChange(of: viewModel.messages.count) { _, _ in
                     scrollToBottom(proxy)
@@ -156,6 +164,7 @@ struct ChatView: View {
                     scrollToBottom(proxy)
                 }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             // Quick replies after last assistant message
             if !viewModel.isStreaming,
@@ -182,6 +191,7 @@ struct ChatView: View {
             Divider().overlay(Color.arveeLine)
             inputBar
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     // MARK: - Input

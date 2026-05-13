@@ -1,9 +1,10 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @AppStorage("apiBaseURL") private var apiBaseURL = "http://localhost:7860"
+    @AppStorage("apiBaseURL") private var apiBaseURL = "http://192.168.1.100:7860"
     @State private var isConnected: Bool? = nil
     @State private var isChecking = false
+    @State private var statusMessage = "Not checked"
 
     var body: some View {
         NavigationStack {
@@ -52,9 +53,21 @@ struct SettingsView: View {
                         .keyboardType(.URL)
                         .listRowBackground(Color.arveeSand.opacity(0.3))
                         .onChange(of: apiBaseURL) { _, newValue in
-                            APIService.shared.baseURL = newValue
+                            let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
+                            if trimmed != newValue {
+                                apiBaseURL = trimmed
+                                return
+                            }
+                            APIService.shared.baseURL = trimmed
                             checkHealth()
                         }
+
+                    if showsLocalhostWarning {
+                        Text("Using localhost on a physical device will fail. Use your Mac LAN IP, e.g. http://192.168.x.x:7860")
+                            .font(.caption)
+                            .foregroundColor(.arveeDanger)
+                            .listRowBackground(Color.arveeSand.opacity(0.3))
+                    }
                 } header: {
                     Text("CONNECTION")
                         .font(.arveeEyebrow())
@@ -84,6 +97,7 @@ struct SettingsView: View {
             .toolbarBackground(Color.arveePaper, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .onAppear {
+                APIService.shared.baseURL = apiBaseURL.trimmingCharacters(in: .whitespacesAndNewlines)
                 checkHealth()
             }
         }
@@ -96,15 +110,29 @@ struct SettingsView: View {
 
     private var statusText: String {
         if isChecking { return "Checking..." }
-        guard let connected = isConnected else { return "Not checked" }
-        return connected ? "Connected" : "Disconnected"
+        if isConnected == nil { return "Not checked" }
+        return statusMessage
+    }
+
+    private var showsLocalhostWarning: Bool {
+        !isRunningOnSimulator &&
+        (apiBaseURL.contains("localhost") || apiBaseURL.contains("127.0.0.1"))
+    }
+
+    private var isRunningOnSimulator: Bool {
+#if targetEnvironment(simulator)
+        true
+#else
+        false
+#endif
     }
 
     private func checkHealth() {
         isChecking = true
         Task {
             let result = await APIService.shared.healthCheck()
-            isConnected = result
+            isConnected = result.isConnected
+            statusMessage = result.message
             isChecking = false
         }
     }

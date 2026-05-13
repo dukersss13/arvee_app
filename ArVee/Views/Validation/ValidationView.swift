@@ -48,49 +48,61 @@ struct ValidationView: View {
     // MARK: - No Session
 
     private var noSessionPlaceholder: some View {
-        VStack(spacing: 16) {
-            ZStack {
-                Circle()
-                    .fill(Color.arveeTealSoft)
-                    .frame(width: 88, height: 88)
-                Image(systemName: "checkmark.shield")
-                    .font(.system(size: 36))
-                    .foregroundStyle(Color.arveeTealGradient)
+        VStack(spacing: 0) {
+            VStack(spacing: 16) {
+                ZStack {
+                    Circle()
+                        .fill(Color.arveeTealSoft)
+                        .frame(width: 88, height: 88)
+                    Image(systemName: "checkmark.shield")
+                        .font(.system(size: 36))
+                        .foregroundStyle(Color.arveeTealGradient)
+                }
+                Text("No session active")
+                    .font(.arveeHeadline())
+                    .foregroundColor(.arveeInk)
+                Text("Go to Upload to create a session and run validation.")
+                    .font(.subheadline)
+                    .foregroundColor(.arveeInkMuted)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 16)
             }
-            Text("No session active")
-                .font(.arveeHeadline())
-                .foregroundColor(.arveeInk)
-            Text("Go to Upload to create a session and run validation.")
-                .font(.subheadline)
-                .foregroundColor(.arveeInkMuted)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 32)
+            .padding(22)
+            .arveeCard(cornerRadius: 20)
+            .padding(.horizontal, 20)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .padding(.top, 28)
     }
 
     // MARK: - Empty Results
 
     private var emptyResultsPlaceholder: some View {
-        VStack(spacing: 16) {
-            ZStack {
-                Circle()
-                    .fill(Color.arveeCoral.opacity(0.08))
-                    .frame(width: 88, height: 88)
-                Image(systemName: "doc.text.magnifyingglass")
-                    .font(.system(size: 36))
-                    .foregroundColor(.arveeCoral)
+        VStack(spacing: 0) {
+            VStack(spacing: 16) {
+                ZStack {
+                    Circle()
+                        .fill(Color.arveeCoral.opacity(0.08))
+                        .frame(width: 88, height: 88)
+                    Image(systemName: "doc.text.magnifyingglass")
+                        .font(.system(size: 36))
+                        .foregroundColor(.arveeCoral)
+                }
+                Text("No results yet")
+                    .font(.arveeHeadline())
+                    .foregroundColor(.arveeInk)
+                Text("Upload files and run validation from the Upload tab.")
+                    .font(.subheadline)
+                    .foregroundColor(.arveeInkMuted)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 16)
             }
-            Text("No results yet")
-                .font(.arveeHeadline())
-                .foregroundColor(.arveeInk)
-            Text("Upload files and run validation from the Upload tab.")
-                .font(.subheadline)
-                .foregroundColor(.arveeInkMuted)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 32)
+            .padding(22)
+            .arveeCard(cornerRadius: 20)
+            .padding(.horizontal, 20)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .padding(.top, 28)
     }
 
     // MARK: - Results
@@ -120,10 +132,10 @@ struct ValidationView: View {
             }
 
             ScrollView {
-                VStack(spacing: 16) {
+                LazyVStack(spacing: 12) {
                     // KPI cards
                     kpiRow
-                        .padding(.top, 12)
+                        .padding(.top, 10)
 
                     // Pill tab picker
                     pillTabPicker
@@ -131,7 +143,7 @@ struct ValidationView: View {
 
                     // Result table
                     resultTable
-                        .padding(.bottom, 24)
+                        .padding(.bottom, 12)
                 }
             }
         }
@@ -275,7 +287,10 @@ struct ValidationView: View {
                     .font(.system(.subheadline, design: .rounded))
                     .foregroundColor(.arveeInkMuted)
             }
-            .padding(.top, 32)
+            .padding(.vertical, 28)
+            .frame(maxWidth: .infinity)
+            .arveeCard(cornerRadius: 14)
+            .padding(.horizontal, 16)
         } else {
             ResultTableView(rows: rows)
         }
@@ -306,9 +321,6 @@ struct ValidationView: View {
                 viewModel.errorMessage = "Export failed: \(error.localizedDescription)"
             }
             isExporting = false
-        }
-    }
-}
         }
     }
 }

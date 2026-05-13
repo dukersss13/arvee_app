@@ -5,7 +5,7 @@ final class APIService {
     static let shared = APIService()
 
     /// Base URL for the Flask backend. Update this to your server address.
-    var baseURL = "http://localhost:7860"
+    var baseURL = "http://192.168.1.100:7860"
 
     private let session: URLSession
     private let decoder: JSONDecoder
@@ -20,13 +20,57 @@ final class APIService {
 
     // MARK: - Session
 
-    /// Check if the backend is reachable.
-    func healthCheck() async -> Bool {
+    /// Check if the backend is reachable and return a diagnostic message.
+    func healthCheck() async -> HealthCheckResult {
+        let trimmed = baseURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard URL(string: "\(trimmed)/api/health") != nil else {
+            return HealthCheckResult(
+                isConnected: false,
+                message: "Invalid API URL format."
+            )
+        }
+
         do {
             _ = try await get(path: "/api/health")
-            return true
+            return HealthCheckResult(isConnected: true, message: "Connected")
+        } catch let error as URLError {
+            switch error.code {
+            case .cannotFindHost, .dnsLookupFailed:
+                return HealthCheckResult(
+                    isConnected: false,
+                    message: "Cannot resolve host. Use your Mac LAN IP on a physical device."
+                )
+            case .cannotConnectToHost, .cannotConnectToNetwork:
+                return HealthCheckResult(
+                    isConnected: false,
+                    message: "Cannot reach backend. Check backend.py, URL, and port 7860."
+                )
+            case .timedOut:
+                return HealthCheckResult(
+                    isConnected: false,
+                    message: "Connection timed out."
+                )
+            case .appTransportSecurityRequiresSecureConnection:
+                return HealthCheckResult(
+                    isConnected: false,
+                    message: "HTTP blocked by iOS security policy."
+                )
+            default:
+                return HealthCheckResult(
+                    isConnected: false,
+                    message: "Network error: \(error.localizedDescription)"
+                )
+            }
+        } catch let APIError.server(statusCode, message) {
+            return HealthCheckResult(
+                isConnected: false,
+                message: "Backend reachable (\(statusCode)) but returned: \(message)"
+            )
         } catch {
-            return false
+            return HealthCheckResult(
+                isConnected: false,
+                message: "Connection failed: \(error.localizedDescription)"
+            )
         }
     }
 
@@ -176,4 +220,9 @@ enum APIError: LocalizedError {
             return message
         }
     }
+}
+
+struct HealthCheckResult {
+    let isConnected: Bool
+    let message: String
 }

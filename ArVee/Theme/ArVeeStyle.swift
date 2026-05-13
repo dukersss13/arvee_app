@@ -28,7 +28,14 @@ extension View {
 struct ArveePageBackground: ViewModifier {
     func body(content: Content) -> some View {
         content
-            .background(Color.arveePaper.ignoresSafeArea())
+            .background(
+                LinearGradient(
+                    colors: [Color.arveePaper, Color.arveeSand.opacity(0.35)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
+            )
     }
 }
 
