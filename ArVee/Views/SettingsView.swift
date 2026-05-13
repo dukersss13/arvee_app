@@ -53,12 +53,12 @@ struct SettingsView: View {
                         .keyboardType(.URL)
                         .listRowBackground(Color.arveeSand.opacity(0.3))
                         .onChange(of: apiBaseURL) { _, newValue in
-                            let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
-                            if trimmed != newValue {
-                                apiBaseURL = trimmed
+                            let normalized = APIService.normalizedBaseURL(newValue)
+                            if normalized != newValue {
+                                apiBaseURL = normalized
                                 return
                             }
-                            APIService.shared.baseURL = trimmed
+                            APIService.shared.baseURL = normalized
                             checkHealth()
                         }
 
@@ -97,7 +97,11 @@ struct SettingsView: View {
             .toolbarBackground(Color.arveePaper, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .onAppear {
-                APIService.shared.baseURL = apiBaseURL.trimmingCharacters(in: .whitespacesAndNewlines)
+                let normalized = APIService.normalizedBaseURL(apiBaseURL)
+                if normalized != apiBaseURL {
+                    apiBaseURL = normalized
+                }
+                APIService.shared.baseURL = normalized
                 checkHealth()
             }
         }

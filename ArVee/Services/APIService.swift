@@ -5,7 +5,11 @@ final class APIService {
     static let shared = APIService()
 
     /// Base URL for the Flask backend. Update this to your server address.
-    var baseURL = "http://192.168.4.21:7860"
+    var baseURL = "http://192.168.4.21:7860" {
+        didSet {
+            baseURL = Self.normalizedBaseURL(baseURL)
+        }
+    }
 
     private let session: URLSession
     private let decoder: JSONDecoder
@@ -16,6 +20,47 @@ final class APIService {
         config.timeoutIntervalForResource = 300
         self.session = URLSession(configuration: config)
         self.decoder = JSONDecoder()
+        self.baseURL = Self.normalizedBaseURL(self.baseURL)
+    }
+
+    static func normalizedBaseURL(_ raw: String) -> String {
+        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return trimmed }
+
+        guard var components = URLComponents(string: trimmed),
+              let scheme = components.scheme?.lowercased(),
+              let host = components.host?.lowercased()
+        else {
+            return trimmed
+        }
+
+        let isLocalHost = host == "localhost" || host == "127.0.0.1"
+        let isPrivateIPv4 =
+            host.hasPrefix("10.") ||
+            host.hasPrefix("192.168.") ||
+            host.hasPrefix("172.16.") ||
+            host.hasPrefix("172.17.") ||
+            host.hasPrefix("172.18.") ||
+            host.hasPrefix("172.19.") ||
+            host.hasPrefix("172.20.") ||
+            host.hasPrefix("172.21.") ||
+            host.hasPrefix("172.22.") ||
+            host.hasPrefix("172.23.") ||
+            host.hasPrefix("172.24.") ||
+            host.hasPrefix("172.25.") ||
+            host.hasPrefix("172.26.") ||
+            host.hasPrefix("172.27.") ||
+            host.hasPrefix("172.28.") ||
+            host.hasPrefix("172.29.") ||
+            host.hasPrefix("172.30.") ||
+            host.hasPrefix("172.31.")
+
+        if scheme == "https" && (isLocalHost || isPrivateIPv4) {
+            components.scheme = "http"
+            return components.string ?? trimmed
+        }
+
+        return trimmed
     }
 
     // MARK: - Session
