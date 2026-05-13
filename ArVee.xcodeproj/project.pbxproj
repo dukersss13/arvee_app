@@ -31,6 +31,7 @@
 		A10022 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B10022; };
 		A10023 /* ArVeeTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10023; };
 		A10024 /* ArVeeStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10024; };
+		A10025 /* UploadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10025; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -58,6 +59,7 @@
 		B10022 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		B10023 /* ArVeeTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArVeeTheme.swift; sourceTree = "<group>"; };
 		B10024 /* ArVeeStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArVeeStyle.swift; sourceTree = "<group>"; };
+		B10025 /* UploadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadView.swift; sourceTree = "<group>"; };
 		C10001 /* ArVee.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ArVee.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -132,10 +134,19 @@
 				B10013 /* SettingsView.swift */,
 				E10007 /* Components */,
 				E10008 /* Session */,
+				E10012 /* Upload */,
 				E10009 /* Validation */,
 				E10010 /* Chat */,
 			);
 			path = Views;
+			sourceTree = "<group>";
+		};
+		E10012 /* Upload */ = {
+			isa = PBXGroup;
+			children = (
+				B10025 /* UploadView.swift */,
+			);
+			path = Upload;
 			sourceTree = "<group>";
 		};
 		E10007 /* Components */ = {
@@ -283,6 +294,7 @@
 				A10021 /* DataTableCards.swift in Sources */,
 				A10023 /* ArVeeTheme.swift in Sources */,
 				A10024 /* ArVeeStyle.swift in Sources */,
+				A10025 /* UploadView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

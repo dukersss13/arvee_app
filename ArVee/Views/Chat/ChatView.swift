@@ -54,7 +54,7 @@ struct ChatView: View {
             Text("Start a session to chat with ArVee")
                 .font(.arveeHeadline())
                 .foregroundColor(.arveeInk)
-            Text("Go to the Session tab to create or load one.")
+            Text("Go to the Upload tab to create or load one.")
                 .font(.subheadline)
                 .foregroundColor(.arveeInkMuted)
         }

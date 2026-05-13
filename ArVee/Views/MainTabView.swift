@@ -7,17 +7,20 @@ struct MainTabView: View {
 
     var body: some View {
         TabView {
-            SessionView(viewModel: sessionVM)
-                .tabItem {
-                    Label("Session", systemImage: "folder.badge.gearshape")
-                }
+            UploadView(
+                sessionVM: sessionVM,
+                validationVM: validationVM
+            )
+            .tabItem {
+                Label("Upload", systemImage: "arrow.up.doc")
+            }
 
             ValidationView(
                 sessionVM: sessionVM,
                 viewModel: validationVM
             )
             .tabItem {
-                Label("Validate", systemImage: "checkmark.shield")
+                Label("Validation", systemImage: "checkmark.shield")
             }
 
             ChatView(

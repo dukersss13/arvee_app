@@ -1,5 +1,4 @@
 import SwiftUI
-import PhotosUI
 
 struct ValidationView: View {
     @ObservedObject var sessionVM: SessionViewModel
@@ -13,16 +12,24 @@ struct ValidationView: View {
                 } else if viewModel.hasResults {
                     resultsView
                 } else {
-                    uploadView
+                    emptyResultsPlaceholder
                 }
             }
             .arveePageBackground()
-            .navigationTitle("Validate")
+            .navigationTitle("Validation")
+            .navigationBarTitleDisplayMode(.large)
             .toolbarBackground(Color.arveePaper, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
-            .overlay {
-                if viewModel.isValidating {
-                    LoadingOverlay(message: "Validating receipts...")
+            .toolbar {
+                if viewModel.hasResults {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button {
+                            viewModel.clear()
+                        } label: {
+                            Image(systemName: "trash")
+                                .foregroundColor(.arveeInkMuted)
+                        }
+                    }
                 }
             }
         }
@@ -32,159 +39,127 @@ struct ValidationView: View {
 
     private var noSessionPlaceholder: some View {
         VStack(spacing: 12) {
-            Image(systemName: "exclamationmark.triangle")
+            Image(systemName: "checkmark.shield")
                 .font(.system(size: 48))
-                .foregroundColor(.arveeCoral)
-            Text("Create or load a session first")
+                .foregroundColor(.arveeInkMuted)
+            Text("No session active")
                 .font(.arveeHeadline())
                 .foregroundColor(.arveeInk)
-            Text("Go to the Session tab to get started.")
+            Text("Go to Upload to create a session and run validation.")
                 .font(.subheadline)
                 .foregroundColor(.arveeInkMuted)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 32)
         }
     }
 
-    // MARK: - Upload
+    // MARK: - Empty Results
 
-    private var uploadView: some View {
-        ScrollView {
-            VStack(spacing: 20) {
-                if let error = viewModel.errorMessage {
-                    StatusBanner(message: error, type: .error)
-                }
-
-                filePickerSection(
-                    title: "Transactions",
-                    subtitle: "Upload bank statements or transaction records",
-                    icon: "doc.text",
-                    selection: $viewModel.transactionPhotos,
-                    count: viewModel.transactionFiles.count
-                )
-
-                filePickerSection(
-                    title: "Proofs",
-                    subtitle: "Upload receipts or proof of purchase",
-                    icon: "receipt",
-                    selection: $viewModel.proofPhotos,
-                    count: viewModel.proofFiles.count
-                )
-
-                Button {
-                    guard let sessionId = sessionVM.sessionId else { return }
-                    Task {
-                        await viewModel.loadPhotos()
-                        await viewModel.validate(sessionId: sessionId)
-                    }
-                } label: {
-                    Label("Run Validation", systemImage: "checkmark.shield.fill")
-                }
-                .buttonStyle(ArveePrimaryButtonStyle())
-                .disabled(viewModel.transactionPhotos.isEmpty && viewModel.proofPhotos.isEmpty)
-                .padding(.horizontal, 24)
-
-                Button {
-                    viewModel.clear()
-                } label: {
-                    Label("Clear All", systemImage: "xmark.circle")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(ArveeTertiaryButtonStyle())
-                .padding(.horizontal, 24)
-            }
-            .padding(.top, 8)
-            .padding(.bottom, 32)
-        }
-    }
-
-    private func filePickerSection(
-        title: String,
-        subtitle: String,
-        icon: String,
-        selection: Binding<[PhotosPickerItem]>,
-        count: Int
-    ) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Image(systemName: icon)
-                    .foregroundColor(.arveeTeal)
-                Text(title)
-                    .font(.arveeHeadline())
-                    .foregroundColor(.arveeInk)
-                Spacer()
-                if count > 0 {
-                    HStack(spacing: 4) {
-                        Image(systemName: "checkmark.circle.fill")
-                            .font(.caption2)
-                        Text("\(count) ready")
-                            .font(.system(.caption, design: .rounded).weight(.medium))
-                    }
-                    .foregroundColor(.arveeTeal)
-                }
-            }
-
-            Text(subtitle)
-                .font(.caption)
+    private var emptyResultsPlaceholder: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "doc.text.magnifyingglass")
+                .font(.system(size: 48))
                 .foregroundColor(.arveeInkMuted)
-
-            PhotosPicker(
-                selection: selection,
-                maxSelectionCount: 20,
-                matching: .images
-            ) {
-                HStack {
-                    Image(systemName: "photo.on.rectangle.angled")
-                    Text("Select Photos")
-                }
-                .font(.system(.subheadline, design: .rounded).weight(.medium))
-                .foregroundColor(.arveeTeal)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 14)
-                .background(Color.arveeCard.opacity(0.7))
-                .cornerRadius(12)
-                .arveeDashedBorder()
-            }
+            Text("No results yet")
+                .font(.arveeHeadline())
+                .foregroundColor(.arveeInk)
+            Text("Upload files and run validation from the Upload tab.")
+                .font(.subheadline)
+                .foregroundColor(.arveeInkMuted)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 32)
         }
-        .padding(16)
-        .arveeCard()
-        .padding(.horizontal, 24)
     }
 
     // MARK: - Results
 
     private var resultsView: some View {
         VStack(spacing: 0) {
+            // Summary banner
             if let summary = viewModel.summary {
                 Text(summary)
-                    .font(.system(.subheadline, design: .rounded))
+                    .font(.system(.caption, design: .rounded))
                     .foregroundColor(.arveeInk)
-                    .padding()
+                    .padding(10)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.arveeMint.opacity(0.3))
+                    .background(Color.arveeMint.opacity(0.25))
             }
 
-            Picker("Results", selection: $viewModel.selectedTab) {
-                ForEach(ValidationViewModel.ResultTab.allCases, id: \.self) { tab in
-                    Text(tab.rawValue).tag(tab)
+            ScrollView {
+                VStack(spacing: 16) {
+                    // KPI cards
+                    kpiRow
+                        .padding(.top, 12)
+
+                    // Sub-tab picker
+                    Picker("Results", selection: $viewModel.selectedTab) {
+                        ForEach(ValidationViewModel.ResultTab.allCases, id: \.self) { tab in
+                            Text(tab.rawValue).tag(tab)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .padding(.horizontal, 16)
+
+                    // Result table
+                    resultTable
+                        .padding(.bottom, 24)
                 }
             }
-            .pickerStyle(.segmented)
-            .padding()
-
-            resultTable
-
-            Spacer()
-
-            Button {
-                viewModel.clear()
-            } label: {
-                Label("Clear Results", systemImage: "trash")
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(ArveeDangerButtonStyle())
-            .padding(.horizontal, 24)
-            .padding(.bottom, 16)
         }
     }
+
+    // MARK: - KPI Row
+
+    private var kpiRow: some View {
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 2), spacing: 10) {
+            kpiCard(
+                label: "Validated",
+                value: viewModel.validatedRows.count,
+                color: .arveeTeal,
+                icon: "checkmark.circle.fill"
+            )
+            kpiCard(
+                label: "Discrepancies",
+                value: viewModel.discrepancies.count,
+                color: .arveeCoral,
+                icon: "exclamationmark.triangle.fill"
+            )
+            kpiCard(
+                label: "Unmatched Tx",
+                value: viewModel.unmatchedTransactions.count,
+                color: .arveeInkMuted,
+                icon: "doc.questionmark"
+            )
+            kpiCard(
+                label: "Unmatched Proofs",
+                value: viewModel.unmatchedProofs.count,
+                color: .arveeInkMuted,
+                icon: "photo.on.rectangle"
+            )
+        }
+        .padding(.horizontal, 16)
+    }
+
+    private func kpiCard(label: String, value: Int, color: Color, icon: String) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 5) {
+                Image(systemName: icon)
+                    .font(.caption2)
+                    .foregroundColor(color)
+                Text(label)
+                    .font(.system(.caption, design: .rounded).weight(.medium))
+                    .foregroundColor(.arveeInkMuted)
+            }
+            Text("\(value)")
+                .font(.system(size: 28, weight: .bold, design: .rounded))
+                .foregroundColor(.arveeInk)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(14)
+        .arveeCard(cornerRadius: 12)
+    }
+
+    // MARK: - Result Table
 
     @ViewBuilder
     private var resultTable: some View {
