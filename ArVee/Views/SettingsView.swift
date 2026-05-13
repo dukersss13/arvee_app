@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @AppStorage("apiBaseURL") private var apiBaseURL = "http://localhost:5000"
+    @AppStorage("apiBaseURL") private var apiBaseURL = "http://localhost:7860"
 
     var body: some View {
         NavigationStack {

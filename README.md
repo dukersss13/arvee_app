@@ -63,7 +63,7 @@ ArVee/
 
 1. Clone this repo
 2. Open `ArVee.xcodeproj` in Xcode
-3. Set the backend URL in Settings tab (default: `http://localhost:5000`)
+3. Set the backend URL in Settings tab (default: `http://localhost:7860`)
 4. Build and run on simulator or device
 
 ## API Endpoints Used
