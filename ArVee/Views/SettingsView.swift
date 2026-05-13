@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @AppStorage("apiBaseURL") private var apiBaseURL = "http://192.168.4.21:7860"
+    @AppStorage("apiBaseURL") private var apiBaseURL = "http://192.168.4.54:7860"
     @State private var isConnected: Bool? = nil
     @State private var isChecking = false
     @State private var statusMessage = "Not checked"

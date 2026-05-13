@@ -1,24 +1,35 @@
 import Foundation
+import Darwin
 
 /// Central HTTP client for all Flask backend API calls.
 final class APIService {
     static let shared = APIService()
 
     /// Base URL for the Flask backend. Update this to your server address.
-    var baseURL = "http://192.168.4.21:7860" {
+    var baseURL = "http://192.168.4.54:7860" {
         didSet {
             baseURL = Self.normalizedBaseURL(baseURL)
         }
     }
 
     private let session: URLSession
+    private let discoverySession: URLSession
     private let decoder: JSONDecoder
+    private let discoveryTimeout: TimeInterval = 0.45
 
     private init() {
         let config = URLSessionConfiguration.default
         config.timeoutIntervalForRequest = 120
         config.timeoutIntervalForResource = 300
+        config.waitsForConnectivity = true
+
+        let discoveryConfig = URLSessionConfiguration.ephemeral
+        discoveryConfig.timeoutIntervalForRequest = discoveryTimeout
+        discoveryConfig.timeoutIntervalForResource = discoveryTimeout
+        discoveryConfig.waitsForConnectivity = false
+
         self.session = URLSession(configuration: config)
+        self.discoverySession = URLSession(configuration: discoveryConfig)
         self.decoder = JSONDecoder()
         self.baseURL = Self.normalizedBaseURL(self.baseURL)
     }
@@ -67,7 +78,8 @@ final class APIService {
 
     /// Check if the backend is reachable and return a diagnostic message.
     func healthCheck() async -> HealthCheckResult {
-        let trimmed = baseURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmed = Self.normalizedBaseURL(baseURL)
+        baseURL = trimmed
         guard URL(string: "\(trimmed)/api/health") != nil else {
             return HealthCheckResult(
                 isConnected: false,
@@ -75,8 +87,15 @@ final class APIService {
             )
         }
 
+        let startedWith = trimmed
         do {
             _ = try await get(path: "/api/health")
+            if baseURL != startedWith {
+                return HealthCheckResult(
+                    isConnected: true,
+                    message: "Connected (auto-switched to \(baseURL))"
+                )
+            }
             return HealthCheckResult(isConnected: true, message: "Connected")
         } catch let error as URLError {
             switch error.code {
@@ -199,10 +218,25 @@ final class APIService {
     // MARK: - Helpers
 
     private func get(path: String) async throws -> Data {
-        let url = URL(string: "\(baseURL)\(path)")!
-        let (data, response) = try await session.data(from: url)
-        try checkHTTPResponse(response, data: data)
-        return data
+        let url = try makeURL(path: path)
+        do {
+            let (data, response) = try await session.data(from: url)
+            try checkHTTPResponse(response, data: data)
+            return data
+        } catch {
+            guard shouldAttemptAutoDiscovery(error),
+                  let discoveredURL = await discoverBackendBaseURL(),
+                  discoveredURL != baseURL
+            else {
+                throw error
+            }
+
+            baseURL = discoveredURL
+            let retryURL = try makeURL(path: path)
+            let (retryData, retryResponse) = try await session.data(from: retryURL)
+            try checkHTTPResponse(retryResponse, data: retryData)
+            return retryData
+        }
     }
 
     private func post(
@@ -210,13 +244,175 @@ final class APIService {
         body: Data? = nil,
         contentType: String = "application/json"
     ) async throws -> Data {
-        var request = URLRequest(url: URL(string: "\(baseURL)\(path)")!)
+        var request = URLRequest(url: try makeURL(path: path))
         request.httpMethod = "POST"
         request.setValue(contentType, forHTTPHeaderField: "Content-Type")
         request.httpBody = body
-        let (data, response) = try await session.data(for: request)
-        try checkHTTPResponse(response, data: data)
-        return data
+
+        do {
+            let (data, response) = try await session.data(for: request)
+            try checkHTTPResponse(response, data: data)
+            return data
+        } catch {
+            guard shouldAttemptAutoDiscovery(error),
+                  let discoveredURL = await discoverBackendBaseURL(),
+                  discoveredURL != baseURL
+            else {
+                throw error
+            }
+
+            baseURL = discoveredURL
+            var retryRequest = URLRequest(url: try makeURL(path: path))
+            retryRequest.httpMethod = "POST"
+            retryRequest.setValue(contentType, forHTTPHeaderField: "Content-Type")
+            retryRequest.httpBody = body
+            let (retryData, retryResponse) = try await session.data(for: retryRequest)
+            try checkHTTPResponse(retryResponse, data: retryData)
+            return retryData
+        }
+    }
+
+    private func makeURL(path: String) throws -> URL {
+        guard let url = URL(string: "\(baseURL)\(path)") else {
+            throw APIError.invalidURL(baseURL)
+        }
+        return url
+    }
+
+    private func shouldAttemptAutoDiscovery(_ error: Error) -> Bool {
+        guard let urlError = error as? URLError else { return false }
+        switch urlError.code {
+        case .cannotFindHost,
+             .dnsLookupFailed,
+             .cannotConnectToHost,
+             .cannotConnectToNetwork,
+             .timedOut,
+             .networkConnectionLost,
+             .notConnectedToInternet:
+            return true
+        default:
+            return false
+        }
+    }
+
+    private func discoverBackendBaseURL() async -> String? {
+        guard let localIP = localIPv4Address() else { return nil }
+        let octets = localIP.split(separator: ".")
+        guard octets.count == 4 else { return nil }
+
+        let subnetPrefix = "\(octets[0]).\(octets[1]).\(octets[2])"
+        let localHost = localIP
+
+        let currentPort = URLComponents(string: baseURL)?.port ?? 7860
+        let candidates = candidateHosts(in: subnetPrefix, excluding: localHost)
+
+        return await withTaskGroup(of: String?.self, returning: String?.self) { group in
+            for host in candidates {
+                group.addTask {
+                    let candidateURL = "http://\(host):\(currentPort)"
+                    let reachable = await self.probeHealth(baseURL: candidateURL)
+                    return reachable ? candidateURL : nil
+                }
+            }
+
+            for await result in group {
+                if let found = result {
+                    group.cancelAll()
+                    return found
+                }
+            }
+            return nil
+        }
+    }
+
+    private func candidateHosts(in prefix: String, excluding localHost: String) -> [String] {
+        var hosts: [String] = []
+        var seen = Set<String>()
+
+        // Favor common gateway and developer-machine suffixes first.
+        let prioritySuffixes = [1, 2, 10, 20, 21, 30, 40, 50, 54, 100, 200, 254]
+        for suffix in prioritySuffixes {
+            let host = "\(prefix).\(suffix)"
+            if host != localHost && !seen.contains(host) {
+                seen.insert(host)
+                hosts.append(host)
+            }
+        }
+
+        for suffix in 1...254 {
+            let host = "\(prefix).\(suffix)"
+            if host != localHost && !seen.contains(host) {
+                seen.insert(host)
+                hosts.append(host)
+            }
+        }
+
+        return hosts
+    }
+
+    private func probeHealth(baseURL: String) async -> Bool {
+        guard let url = URL(string: "\(baseURL)/api/health") else { return false }
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData
+        request.timeoutInterval = discoveryTimeout
+
+        do {
+            let (data, response) = try await discoverySession.data(for: request)
+            guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+                return false
+            }
+
+            if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let status = json["status"] as? String {
+                return status.lowercased() == "ok"
+            }
+
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    private func localIPv4Address() -> String? {
+        var address: String?
+        var ifaddr: UnsafeMutablePointer<ifaddrs>?
+
+        guard getifaddrs(&ifaddr) == 0, let firstAddr = ifaddr else {
+            return nil
+        }
+        defer { freeifaddrs(ifaddr) }
+
+        for ptr in sequence(first: firstAddr, next: { $0.pointee.ifa_next }) {
+            let interface = ptr.pointee
+            let addrFamily = interface.ifa_addr.pointee.sa_family
+            guard addrFamily == UInt8(AF_INET) else { continue }
+
+            let name = String(cString: interface.ifa_name)
+            guard name == "en0" || name == "en1" || name == "pdp_ip0" else { continue }
+
+            var addr = interface.ifa_addr.pointee
+            var hostBuffer = [CChar](repeating: 0, count: Int(NI_MAXHOST))
+
+            let result = getnameinfo(
+                &addr,
+                socklen_t(interface.ifa_addr.pointee.sa_len),
+                &hostBuffer,
+                socklen_t(hostBuffer.count),
+                nil,
+                0,
+                NI_NUMERICHOST
+            )
+
+            if result == 0 {
+                address = String(cString: hostBuffer)
+                if name == "en0" {
+                    break
+                }
+            }
+        }
+
+        return address
     }
 
     private func checkHTTPResponse(_ response: URLResponse, data: Data) throws {
@@ -258,11 +454,14 @@ struct FilePayload {
 
 enum APIError: LocalizedError {
     case server(statusCode: Int, message: String)
+    case invalidURL(String)
 
     var errorDescription: String? {
         switch self {
         case .server(_, let message):
             return message
+        case .invalidURL(let url):
+            return "Invalid API URL: \(url)"
         }
     }
 }
