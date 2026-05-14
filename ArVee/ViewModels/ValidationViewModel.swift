@@ -31,6 +31,11 @@ final class ValidationViewModel: ObservableObject {
     private let api = APIService.shared
     private var currentSessionId: String?
     private var validationSSEClient: ValidationSSEClient?
+    private let acceptedSourceKey = "__accepted_source"
+    private let originalTransactionTotalKey = "__original_transaction_total"
+    private let originalTransactionCategoryKey = "__original_transaction_category"
+    private let originalProofCategoryKey = "__original_proof_category"
+    private let originalReasonKey = "__original_reason"
 
     var hasResults: Bool { !validatedRows.isEmpty || !discrepancies.isEmpty || !unmatchedTransactions.isEmpty || !unmatchedProofs.isEmpty || !recommendations.isEmpty }
 
@@ -220,6 +225,7 @@ final class ValidationViewModel: ObservableObject {
         guard index < discrepancies.count else { return }
         var row = discrepancies.remove(at: index)
         var fields = row.fields
+        let originalTransactionTotal = fields["Transaction Total"] ?? fields["total"] ?? ""
 
         let transactionTotal = adjustedAmount ?? parseCurrencyAmount(fields["Transaction Total"] ?? fields["total"] ?? "")
         let proofTotal = parseCurrencyAmount(fields["Proof Total"] ?? "")
@@ -229,7 +235,7 @@ final class ValidationViewModel: ObservableObject {
             return
         }
 
-        fields["Result"] = "Validated (Manual)"
+        fields["Result"] = "Validated (Discrepancy Accepted)"
         if let tx = transactionTotal {
             fields["Adjusted Amount"] = String(format: "%.2f", tx)
             fields["Transaction Total"] = String(format: "%.2f", tx)
@@ -243,6 +249,12 @@ final class ValidationViewModel: ObservableObject {
         if let c = comment, !c.isEmpty {
             fields["Comment"] = c
         }
+        fields[acceptedSourceKey] = "discrepancy"
+        fields[originalTransactionTotalKey] = originalTransactionTotal
+        fields[originalTransactionCategoryKey] = fields["Transaction Category"] ?? ""
+        fields[originalProofCategoryKey] = fields["Proof Category"] ?? ""
+        fields[originalReasonKey] = fields["Reason"] ?? ""
+
         row = ResultRow(fields: fields)
         validatedRows.append(row)
         persistSessionStateIfPossible()
@@ -280,6 +292,10 @@ final class ValidationViewModel: ObservableObject {
         fields["Category"] = unifiedCategory
         fields["Transaction Category"] = unifiedCategory
         fields["Proof Category"] = unifiedCategory
+        fields[acceptedSourceKey] = "recommendation"
+        fields[originalTransactionCategoryKey] = txCategory
+        fields[originalProofCategoryKey] = proofCategory
+        fields[originalReasonKey] = rec.value(for: "Reason")
 
         // Remove matching items from unmatched lists by business name
         let txName = rec.value(for: "Transaction Business Name")
@@ -292,6 +308,25 @@ final class ValidationViewModel: ObservableObject {
         }
 
         validatedRows.append(ResultRow(fields: fields))
+        persistSessionStateIfPossible()
+    }
+
+    func canRemoveAcceptedValidatedRow(_ row: ResultRow) -> Bool {
+        let source = row.value(for: acceptedSourceKey).lowercased()
+        return source == "recommendation" || source == "discrepancy"
+    }
+
+    func removeAcceptedValidatedRow(rowId: UUID) {
+        guard let idx = validatedRows.firstIndex(where: { $0.id == rowId }) else { return }
+        let row = validatedRows.remove(at: idx)
+        let source = row.value(for: acceptedSourceKey).lowercased()
+
+        if source == "discrepancy" {
+            restoreDiscrepancy(from: row)
+        } else if source == "recommendation" {
+            restoreRecommendationAndUnmatchedRows(from: row)
+        }
+
         persistSessionStateIfPossible()
     }
 
@@ -405,6 +440,111 @@ final class ValidationViewModel: ObservableObject {
         }
 
         return payload
+    }
+
+    private func stripInternalFields(from fields: [String: String]) -> [String: String] {
+        fields.filter { !($0.key.hasPrefix("__")) }
+    }
+
+    private func restoreDiscrepancy(from row: ResultRow) {
+        var restored = stripInternalFields(from: row.fields)
+
+        let originalTransactionTotal = row.value(for: originalTransactionTotalKey)
+        if !originalTransactionTotal.isEmpty {
+            restored["Transaction Total"] = originalTransactionTotal
+        }
+
+        restored.removeValue(forKey: "Result")
+        restored.removeValue(forKey: "Adjusted Amount")
+        restored.removeValue(forKey: "Comment")
+        restored.removeValue(forKey: "Category")
+
+        if !containsDiscrepancy(restored) {
+            discrepancies.append(ResultRow(fields: restored))
+        }
+    }
+
+    private func restoreRecommendationAndUnmatchedRows(from row: ResultRow) {
+        let txCategory = row.value(for: originalTransactionCategoryKey).isEmpty
+            ? row.value(for: "Transaction Category")
+            : row.value(for: originalTransactionCategoryKey)
+        let proofCategory = row.value(for: originalProofCategoryKey).isEmpty
+            ? row.value(for: "Proof Category")
+            : row.value(for: originalProofCategoryKey)
+        let originalReason = row.value(for: originalReasonKey).isEmpty
+            ? row.value(for: "Reason")
+            : row.value(for: originalReasonKey)
+
+        var recommendationFields: [String: String] = [
+            "Transaction Business Name": row.value(for: "Transaction Business Name"),
+            "Transaction Total": row.value(for: "Transaction Total"),
+            "Transaction Date": row.value(for: "Transaction Date"),
+            "Transaction Category": txCategory,
+            "Proof Business Name": row.value(for: "Proof Business Name"),
+            "Proof Total": row.value(for: "Proof Total"),
+            "Proof Date": row.value(for: "Proof Date"),
+            "Proof Category": proofCategory,
+        ]
+        if !originalReason.isEmpty {
+            recommendationFields["Reason"] = originalReason
+        }
+
+        if !containsRecommendation(recommendationFields) {
+            recommendations.append(ResultRow(fields: recommendationFields))
+        }
+
+        let txUnmatched: [String: String] = [
+            "Business Name": row.value(for: "Transaction Business Name"),
+            "Total": row.value(for: "Transaction Total"),
+            "Date": row.value(for: "Transaction Date"),
+            "Category": txCategory,
+        ]
+        if !containsUnmatched(unmatchedTransactions, candidate: txUnmatched) {
+            unmatchedTransactions.append(ResultRow(fields: txUnmatched))
+        }
+
+        let proofUnmatched: [String: String] = [
+            "Business Name": row.value(for: "Proof Business Name"),
+            "Total": row.value(for: "Proof Total"),
+            "Date": row.value(for: "Proof Date"),
+            "Category": proofCategory,
+        ]
+        if !containsUnmatched(unmatchedProofs, candidate: proofUnmatched) {
+            unmatchedProofs.append(ResultRow(fields: proofUnmatched))
+        }
+    }
+
+    private func containsRecommendation(_ candidate: [String: String]) -> Bool {
+        recommendations.contains { row in
+            sameValue(row, candidate, key: "Transaction Business Name")
+                && sameValue(row, candidate, key: "Transaction Total")
+                && sameValue(row, candidate, key: "Transaction Date")
+                && sameValue(row, candidate, key: "Proof Business Name")
+                && sameValue(row, candidate, key: "Proof Total")
+                && sameValue(row, candidate, key: "Proof Date")
+        }
+    }
+
+    private func containsDiscrepancy(_ candidate: [String: String]) -> Bool {
+        discrepancies.contains { row in
+            sameValue(row, candidate, key: "Transaction Business Name")
+                && sameValue(row, candidate, key: "Transaction Date")
+                && sameValue(row, candidate, key: "Proof Business Name")
+                && sameValue(row, candidate, key: "Proof Date")
+        }
+    }
+
+    private func containsUnmatched(_ rows: [ResultRow], candidate: [String: String]) -> Bool {
+        rows.contains { row in
+            sameValue(row, candidate, key: "Business Name")
+                && sameValue(row, candidate, key: "Total")
+                && sameValue(row, candidate, key: "Date")
+        }
+    }
+
+    private func sameValue(_ row: ResultRow, _ candidate: [String: String], key: String) -> Bool {
+        row.value(for: key).trimmingCharacters(in: .whitespacesAndNewlines)
+            == (candidate[key] ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     func clear() {

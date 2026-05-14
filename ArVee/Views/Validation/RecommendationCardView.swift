@@ -122,8 +122,6 @@ struct RecommendationCardView: View {
             keys: [
                 "Transaction Category",
                 "transaction_category",
-                "Category",
-                "category",
             ]
         )
     }
@@ -133,8 +131,6 @@ struct RecommendationCardView: View {
             keys: [
                 "Proof Category",
                 "proof_category",
-                "Category",
-                "category",
             ]
         )
     }

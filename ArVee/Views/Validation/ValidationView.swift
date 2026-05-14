@@ -157,6 +157,10 @@ struct ValidationView: View {
                                 isCategoryEditable: true,
                                 onCategoryChange: { newCategory in
                                     viewModel.updateValidatedCategory(for: row.id, category: newCategory)
+                                },
+                                canRemoveAccepted: viewModel.canRemoveAcceptedValidatedRow(row),
+                                onRemoveAccepted: {
+                                    viewModel.removeAcceptedValidatedRow(rowId: row.id)
                                 }
                             )
                         }
@@ -443,6 +447,8 @@ struct ResultCardView: View {
     var categoryOptions: [String] = []
     var isCategoryEditable: Bool = false
     var onCategoryChange: ((String) -> Void)? = nil
+    var canRemoveAccepted: Bool = false
+    var onRemoveAccepted: (() -> Void)? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -532,11 +538,26 @@ struct ResultCardView: View {
 
             // Status / Reason
             let status = row.value(for: "Result").isEmpty ? row.value(for: "Reason") : row.value(for: "Result")
-            if !status.isEmpty {
-                Text(status)
-                    .font(.system(size: scaledResultsFont(10), design: .rounded))
-                    .foregroundColor(.arveeInkMuted)
-                    .lineLimit(1)
+            if !status.isEmpty || canRemoveAccepted {
+                HStack(spacing: 10) {
+                    if !status.isEmpty {
+                        Text(status)
+                            .font(.system(size: scaledResultsFont(10), design: .rounded))
+                            .foregroundColor(.arveeInkMuted)
+                            .lineLimit(1)
+                    }
+                    Spacer()
+                    if canRemoveAccepted, let onRemoveAccepted {
+                        Button {
+                            onRemoveAccepted()
+                        } label: {
+                            Label("Remove", systemImage: "arrow.uturn.backward.circle")
+                                .font(.system(size: scaledResultsFont(10), weight: .semibold, design: .rounded))
+                                .foregroundColor(.arveeCoral)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
             }
         }
     }

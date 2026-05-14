@@ -45,21 +45,9 @@ struct ChartCardView: View {
                 }
             }
 
-            if let summary = selectionSummary {
-                Text(summary)
-                    .font(.system(.caption, design: .rounded).weight(.semibold))
-                    .foregroundColor(.arveeTeal)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 5)
-                    .background(
-                        RoundedRectangle(cornerRadius: 8, style: .continuous)
-                            .fill(Color.arveeTealSoft.opacity(0.35))
-                    )
-            } else {
-                Text("Tap chart to see exact values")
-                    .font(.system(.caption2, design: .rounded).weight(.medium))
-                    .foregroundColor(.arveeInkMuted)
-            }
+            Text("Tap chart to show exact values")
+                .font(.system(.caption2, design: .rounded).weight(.medium))
+                .foregroundColor(.arveeInkMuted)
 
             Group {
                 switch chart.type {
@@ -75,6 +63,12 @@ struct ChartCardView: View {
                 }
             }
             .frame(height: chartHeight)
+            .overlay(alignment: .top) {
+                if let summary = selectionSummary {
+                    selectionOverlay(summary)
+                        .padding(.top, 4)
+                }
+            }
         }
         .padding()
         .arveeCard(cornerRadius: 12)
@@ -97,6 +91,11 @@ struct ChartCardView: View {
                     .foregroundStyle(Color.arveeTeal.gradient)
                     .cornerRadius(4)
                     .opacity(selectedCategory == nil || selectedCategory == label ? 1.0 : 0.45)
+                    .annotation(position: .top, alignment: .center) {
+                        if selectedCategory == label {
+                            valueTag(currencyLabel(value))
+                        }
+                    }
                 }
             }
             .chartXSelection(value: $selectedCategory)
@@ -140,6 +139,11 @@ struct ChartCardView: View {
                     .cornerRadius(4)
                     .position(by: .value("Period", point.periodName))
                     .opacity(selectedCategory == nil || selectedCategory == point.category ? 1.0 : 0.45)
+                    .annotation(position: .top, alignment: .center) {
+                        if selectedCategory == point.category {
+                            valueTag(currencyLabel(point.amount))
+                        }
+                    }
                 }
             }
             .chartXSelection(value: $selectedCategory)
@@ -249,14 +253,45 @@ struct ChartCardView: View {
 
     private func selectedPieIndex(for values: [Double]) -> Int? {
         guard let selectedPieAmount else { return nil }
+        let total = values.reduce(0, +)
+        guard total > 0 else { return nil }
+
+        let normalizedAmount = selectedPieAmount.truncatingRemainder(dividingBy: total)
+        let probe = normalizedAmount < 0 ? (normalizedAmount + total) : normalizedAmount
+
         var runningTotal = 0.0
         for (idx, value) in values.enumerated() {
-            runningTotal += value
-            if selectedPieAmount <= runningTotal {
+            let next = runningTotal + value
+            if probe >= runningTotal && probe < next {
                 return idx
             }
+            runningTotal = next
         }
-        return values.isEmpty ? nil : (values.count - 1)
+        return nil
+    }
+
+    private func valueTag(_ text: String) -> some View {
+        Text(text)
+            .font(.system(.caption2, design: .rounded).weight(.semibold))
+            .foregroundColor(.arveeInk)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 3)
+            .background(
+                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    .fill(Color.arveePaper.opacity(0.95))
+            )
+    }
+
+    private func selectionOverlay(_ text: String) -> some View {
+        Text(text)
+            .font(.system(.caption, design: .rounded).weight(.semibold))
+            .foregroundColor(.arveeTeal)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 5)
+            .background(
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill(Color.arveeTealSoft.opacity(0.35))
+            )
     }
 
     private var groupedBarPoints: [GroupedBarPoint] {
