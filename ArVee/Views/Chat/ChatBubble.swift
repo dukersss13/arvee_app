@@ -3,7 +3,6 @@ import SwiftUI
 struct ChatBubble: View {
     let message: ChatMessage
     var onQuickReplyTap: ((String) -> Void)? = nil
-    @State private var pendingTextPulse = false
 
     private var isUser: Bool { message.role == .user }
     private let bubbleCornerRadius: CGFloat = 18
@@ -32,7 +31,6 @@ struct ChatBubble: View {
                                 .font(.system(.body, design: .rounded))
                                 .lineSpacing(2)
                                 .textSelection(.enabled)
-                                .opacity(shouldPulseText ? (pendingTextPulse ? 1.0 : 0.35) : 1.0)
                         }
                     }
                     .padding(.horizontal, 14)
@@ -59,15 +57,6 @@ struct ChatBubble: View {
                     }
                     .shadow(color: bubbleShadowColor, radius: isUser ? 14 : 10, x: 0, y: isUser ? 8 : 4)
                     .shadow(color: Color.arveeInk.opacity(isUser ? 0.05 : 0.08), radius: 4, x: 0, y: 2)
-                    .onAppear {
-                        updatePendingPulse(isActive: shouldPulseText)
-                    }
-                    .onChange(of: message.isPending) { _, isPending in
-                        updatePendingPulse(isActive: isPending && !isUser && message.isBuffering)
-                    }
-                    .onChange(of: message.isBuffering) { _, isBuffering in
-                        updatePendingPulse(isActive: message.isPending && !isUser && isBuffering)
-                    }
                 }
 
                 if isUser {
@@ -181,44 +170,21 @@ struct ChatBubble: View {
     private var bubbleShadowColor: Color {
         isUser ? Color.arveeTeal.opacity(0.24) : Color.arveeInk.opacity(0.10)
     }
-
-    private var shouldPulseText: Bool {
-        message.isPending && !isUser && message.isBuffering
-    }
-
-    private func updatePendingPulse(isActive: Bool) {
-        if isActive {
-            pendingTextPulse = false
-            withAnimation(.easeInOut(duration: 1.4).repeatForever(autoreverses: true)) {
-                pendingTextPulse = true
-            }
-        } else {
-            pendingTextPulse = false
-        }
-    }
 }
 
 struct TypingIndicator: View {
-    @State private var phase = 0.0
+    @State private var rotation: Double = 0
 
     var body: some View {
-        HStack(spacing: 4) {
-            ForEach(0..<3, id: \.self) { i in
-                Circle()
-                    .fill(Color.arveeTeal)
-                    .frame(width: 8, height: 8)
-                    .scaleEffect(dotScale(for: i))
-            }
-        }
+        Image(systemName: "hourglass")
+            .font(.system(size: 18, weight: .semibold))
+            .foregroundColor(.arveeTeal)
+            .rotationEffect(.degrees(rotation))
         .onAppear {
-            withAnimation(.easeInOut(duration: 0.6).repeatForever()) {
-                phase = 1
+            rotation = 0
+            withAnimation(.linear(duration: 1.1).repeatForever(autoreverses: false)) {
+                rotation = 360
             }
         }
-    }
-
-    private func dotScale(for index: Int) -> CGFloat {
-        let offset = Double(index) * 0.2
-        return 0.6 + 0.4 * sin((phase + offset) * .pi)
     }
 }

@@ -8,8 +8,6 @@ struct UploadView: View {
     @ObservedObject var validationVM: ValidationViewModel
     @Binding var selectedTab: Int
 
-    @State private var showLoadField = false
-    @State private var loadSessionId = ""
     @State private var showTxDocPicker = false
     @State private var showProofDocPicker = false
     @State private var hourglassRotation: Double = 0
@@ -71,9 +69,6 @@ struct UploadView: View {
                     if validationVM.hasResults {
                         successCard
                     }
-
-                    // Session management (collapsed)
-                    sessionFooter
 
                     Spacer(minLength: 32)
                 }
@@ -386,46 +381,6 @@ struct UploadView: View {
         .frame(maxWidth: .infinity)
         .arveePremiumGlassCard(accent: .arveeSuccess, cornerRadius: 16)
         .padding(.horizontal, 16)
-    }
-
-    // MARK: - Session Footer
-
-    private var sessionFooter: some View {
-        VStack(spacing: 8) {
-            Button {
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    showLoadField.toggle()
-                }
-            } label: {
-                HStack(spacing: 4) {
-                    Image(systemName: "tray.and.arrow.down")
-                        .font(.caption)
-                    Text("Load existing session")
-                        .font(.system(.caption, design: .rounded))
-                }
-                .foregroundColor(.arveeInkMuted)
-            }
-
-            if showLoadField {
-                HStack(spacing: 8) {
-                    TextField("Paste session ID", text: $loadSessionId)
-                        .textFieldStyle(ArveeTextFieldStyle())
-                        .textInputAutocapitalization(.never)
-                    Button {
-                        let id = loadSessionId.trimmingCharacters(in: .whitespaces)
-                        guard !id.isEmpty else { return }
-                        Task { await sessionVM.loadSession(id: id) }
-                    } label: {
-                        Image(systemName: "arrow.right.circle.fill")
-                            .font(.title3)
-                            .foregroundStyle(Color.arveeTealGradient)
-                    }
-                    .disabled(loadSessionId.trimmingCharacters(in: .whitespaces).isEmpty)
-                }
-                .padding(.horizontal, 16)
-            }
-        }
-        .padding(.top, 8)
     }
 
     private func previewPhoto(at index: Int, from items: [PhotosPickerItem]) async {

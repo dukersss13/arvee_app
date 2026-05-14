@@ -234,6 +234,7 @@ struct ValidationView: View {
                                 RecommendationCardView(
                                     row: row,
                                     isSelected: selectedRecommendationIds.contains(row.id),
+                                    isAcceptEnabled: selectedRecommendationIds.contains(row.id),
                                     onToggleSelected: {
                                         if selectedRecommendationIds.contains(row.id) {
                                             selectedRecommendationIds.remove(row.id)
@@ -242,6 +243,7 @@ struct ValidationView: View {
                                         }
                                     }
                                 ) {
+                                    guard selectedRecommendationIds.contains(row.id) else { return }
                                     viewModel.acceptRecommendation(at: idx)
                                     selectedRecommendationIds.remove(row.id)
                                 }

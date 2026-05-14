@@ -12,7 +12,6 @@ final class ChatViewModel: ObservableObject {
     private var sseClient: SSEClient?
     private let api = APIService.shared
     private var stateSyncHandler: ((String) async -> Void)?
-    private var bufferingTask: Task<Void, Never>?
     private var consumedUploadQuickReplies: Set<String> = []
 
     private let uploadQuickReplyOrder = [
@@ -23,14 +22,6 @@ final class ChatViewModel: ObservableObject {
     private let uploadQuickReplyResponses = [
         "How do I upload Transactions/Proofs?": "You can upload them in the Upload tab",
         "What should I do after upload?": "Check the Results tab and ask ArVee agent any questions related to your results.",
-    ]
-
-    private let whimsicalBufferMessages = [
-        "Let me peek into your receipts...",
-        "Crunching the numbers with sparkle dust...",
-        "Shuffling pennies and spreadsheets...",
-        "One moment while I chase the totals...",
-        "Brewing a fresh spending snapshot...",
     ]
 
     func setStateSyncHandler(_ handler: @escaping (String) async -> Void) {
@@ -56,10 +47,8 @@ final class ChatViewModel: ObservableObject {
         messages.append(userMsg)
         inputText = ""
 
-        let placeholder = whimsicalBufferMessages.randomElement() ?? "Let me look into it..."
-
         let assistantMsg = ChatMessage(
-            role: .assistant, text: placeholder, isPending: true,
+            role: .assistant, text: "", isPending: true,
             chart: nil, topCategories: nil, comparisonTable: nil,
             quickReplies: nil,
             isBuffering: true
@@ -73,8 +62,6 @@ final class ChatViewModel: ObservableObject {
         processingStage = "Working on your request..."
         processingPercent = 0
 
-        startBufferingUpdates(for: assistantIndex)
-
         let (url, body, headers) = api.chatStreamURL(sessionId: sessionId, message: text)
         let client = SSEClient()
         self.sseClient = client
@@ -86,11 +73,7 @@ final class ChatViewModel: ObservableObject {
 
             if !streamedAnyToken {
                 streamedAnyToken = true
-                self.stopBufferingUpdates()
-                if self.isBufferingMessage(self.messages[assistantIndex].text) ||
-                    self.messages[assistantIndex].text == placeholder {
-                    self.messages[assistantIndex].text = ""
-                }
+                self.messages[assistantIndex].text = ""
                 // Match web behavior: buffering pulse ends when first token arrives.
                 self.messages[assistantIndex].isPending = false
                 self.messages[assistantIndex].isBuffering = false
@@ -117,14 +100,12 @@ final class ChatViewModel: ObservableObject {
                 self.sseClient = nil
                 return
             }
-            self.stopBufferingUpdates()
             self.messages[assistantIndex].isPending = false
             self.messages[assistantIndex].isBuffering = false
 
             let serverAnswer = response.answer?.trimmingCharacters(in: .whitespacesAndNewlines)
 
-            // Never persist buffering text as the final assistant response.
-            if !streamedAnyToken || self.isBufferingMessage(self.messages[assistantIndex].text) {
+            if !streamedAnyToken {
                 self.messages[assistantIndex].text = serverAnswer?.isEmpty == false
                     ? serverAnswer!
                     : "I found some results for you."
@@ -158,7 +139,6 @@ final class ChatViewModel: ObservableObject {
                 self.sseClient = nil
                 return
             }
-            self.stopBufferingUpdates()
             self.messages[assistantIndex].isPending = false
             self.messages[assistantIndex].isBuffering = false
             self.messages[assistantIndex].text = "Error: \(msg)"
@@ -174,14 +154,13 @@ final class ChatViewModel: ObservableObject {
     func cancelStream() {
         sseClient?.cancel()
         sseClient = nil
-        stopBufferingUpdates()
         isStreaming = false
         processingStage = nil
         processingPercent = nil
         if let last = messages.indices.last, messages[last].isPending {
             messages[last].isPending = false
             messages[last].isBuffering = false
-            if messages[last].text.isEmpty || isBufferingMessage(messages[last].text) {
+            if messages[last].text.isEmpty {
                 messages[last].text = "No problem. I stopped that request. Ask me anything else when you're ready."
             }
         }
@@ -232,34 +211,5 @@ final class ChatViewModel: ObservableObject {
         )
 
         return true
-    }
-
-    private func startBufferingUpdates(for assistantIndex: Int) {
-        stopBufferingUpdates()
-        bufferingTask = Task { [weak self] in
-            guard let self = self else { return }
-            while !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: 1_600_000_000)
-                guard !Task.isCancelled else { return }
-                guard self.isStreaming, self.messages.indices.contains(assistantIndex) else { return }
-                if !self.messages[assistantIndex].isPending {
-                    return
-                }
-
-                // Keep the pending assistant bubble feeling alive before first tokens arrive.
-                if self.messages[assistantIndex].text.isEmpty || self.isBufferingMessage(self.messages[assistantIndex].text) {
-                    self.messages[assistantIndex].text = self.whimsicalBufferMessages.randomElement() ?? "Working on your request..."
-                }
-            }
-        }
-    }
-
-    private func stopBufferingUpdates() {
-        bufferingTask?.cancel()
-        bufferingTask = nil
-    }
-
-    private func isBufferingMessage(_ text: String) -> Bool {
-        whimsicalBufferMessages.contains(text) || text == "Working on your request..."
     }
 }

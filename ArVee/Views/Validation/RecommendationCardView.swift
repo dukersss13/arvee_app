@@ -10,6 +10,7 @@ private func scaledRecommendationFont(_ base: CGFloat) -> CGFloat {
 struct RecommendationCardView: View {
     let row: ResultRow
     let isSelected: Bool
+    let isAcceptEnabled: Bool
     let onToggleSelected: () -> Void
     let onAccept: () -> Void
 
@@ -71,9 +72,10 @@ struct RecommendationCardView: View {
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 10)
-                    .background(Color.arveeTeal)
+                    .background(isAcceptEnabled ? Color.arveeTeal : Color.arveeInkMuted)
                     .cornerRadius(10)
             }
+            .disabled(!isAcceptEnabled)
         }
         .padding(14)
         .arveePremiumGlassCard(accent: .arveeTeal, cornerRadius: 12)

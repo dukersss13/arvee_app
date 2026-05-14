@@ -55,6 +55,10 @@ struct ChartCardView: View {
                         RoundedRectangle(cornerRadius: 8, style: .continuous)
                             .fill(Color.arveeTealSoft.opacity(0.35))
                     )
+            } else {
+                Text("Tap chart to see exact values")
+                    .font(.system(.caption2, design: .rounded).weight(.medium))
+                    .foregroundColor(.arveeInkMuted)
             }
 
             Group {
