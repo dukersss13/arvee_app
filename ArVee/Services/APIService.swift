@@ -4,6 +4,7 @@ import Darwin
 /// Central HTTP client for all Flask backend API calls.
 final class APIService {
     static let shared = APIService()
+    static let defaultBaseURL = "https://arvee-backend-5hqe7uiuka-uc.a.run.app"
 
     private enum StorageKeys {
         static let apiBaseURL = "apiBaseURL"
@@ -12,7 +13,7 @@ final class APIService {
     }
 
     /// Base URL for the Flask backend. Update this to your server address.
-    var baseURL = "https://arvee-backend-5hqe7uiuka-uc.a.run.app" {
+    var baseURL = APIService.defaultBaseURL {
         didSet {
             baseURL = Self.normalizedBaseURL(baseURL)
         }
@@ -40,7 +41,7 @@ final class APIService {
         let config = URLSessionConfiguration.default
         config.timeoutIntervalForRequest = 120
         config.timeoutIntervalForResource = 300
-        config.waitsForConnectivity = true
+        config.waitsForConnectivity = false
 
         let discoveryConfig = URLSessionConfiguration.ephemeral
         discoveryConfig.timeoutIntervalForRequest = discoveryTimeout
@@ -52,6 +53,8 @@ final class APIService {
         self.decoder = JSONDecoder()
         if let saved = UserDefaults.standard.string(forKey: StorageKeys.apiBaseURL), !saved.isEmpty {
             self.baseURL = saved
+        } else {
+            self.baseURL = APIService.defaultBaseURL
         }
         self.baseURL = Self.normalizedBaseURL(self.baseURL)
     }
@@ -128,15 +131,20 @@ final class APIService {
             )
         }
 
-        let startedWith = trimmed
         do {
-            _ = try await get(path: "/api/health")
-            if baseURL != startedWith {
-                return HealthCheckResult(
-                    isConnected: true,
-                    message: "Connected (auto-switched to \(baseURL))"
-                )
-            }
+            var request = URLRequest(url: try makeURL(path: "/api/health"))
+            request.httpMethod = "GET"
+            request.timeoutInterval = 12
+            applyAuthHeaders(&request)
+
+            let config = URLSessionConfiguration.ephemeral
+            config.timeoutIntervalForRequest = 12
+            config.timeoutIntervalForResource = 12
+            config.waitsForConnectivity = false
+
+            let fastSession = URLSession(configuration: config)
+            let (data, response) = try await fastSession.data(for: request)
+            try checkHTTPResponse(response, data: data)
             return HealthCheckResult(isConnected: true, message: "Connected")
         } catch let error as URLError {
             switch error.code {

@@ -64,12 +64,7 @@ struct HomeView: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
-        .background(Color.arveeCard)
-        .cornerRadius(24)
-        .overlay(
-            RoundedRectangle(cornerRadius: 24)
-                .stroke(Color.arveeLine, lineWidth: 0.5)
-        )
+        .arveePremiumGlassCard(accent: .arveeTeal, cornerRadius: 24)
         .padding(.horizontal, 16)
     }
 
@@ -155,7 +150,7 @@ struct HomeView: View {
                         .foregroundColor(.arveeInkMuted)
                 }
                 .padding(16)
-                .arveeGradientCard(accent: .arveeTeal, cornerRadius: 16)
+                .arveePremiumGlassCard(accent: .arveeTeal, cornerRadius: 16)
             }
 
             // Chat with ArVee
@@ -188,7 +183,7 @@ struct HomeView: View {
                         .foregroundColor(.arveeInkMuted)
                 }
                 .padding(16)
-                .arveeGradientCard(accent: .arveeCoral, cornerRadius: 16)
+                .arveePremiumGlassCard(accent: .arveeCoral, cornerRadius: 16)
             }
         }
         .padding(.horizontal, 16)
@@ -214,7 +209,7 @@ struct HomeView: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .arveeCard(cornerRadius: 14)
+        .arveePremiumGlassCard(accent: .arveeTeal, cornerRadius: 14)
         .padding(.horizontal, 16)
     }
 }

@@ -75,6 +75,9 @@ struct ChatView: View {
                         Circle()
                             .fill(Color.arveeTealSoft)
                             .frame(width: 96, height: 96)
+                        Circle()
+                            .stroke(Color.arveeGlassStroke, lineWidth: 1)
+                            .frame(width: 96, height: 96)
                         Image(systemName: "bubble.left.and.text.bubble.right")
                             .font(.system(size: 40))
                             .foregroundStyle(Color.arveeTealGradient)
@@ -206,12 +209,7 @@ struct ChatView: View {
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
-                .background(Color.arveeCardElevated)
-                .cornerRadius(22)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 22)
-                        .stroke(Color.arveeLine, lineWidth: 0.5)
-                )
+                .arveePremiumGlassCard(accent: .arveeTeal, cornerRadius: 22)
                 .shadow(color: Color.arveeInk.opacity(0.04), radius: 4, x: 0, y: 2)
 
             if inputFocused {
@@ -246,7 +244,7 @@ struct ChatView: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
-        .background(Color.arveePaper.opacity(0.95))
+        .background(Color.arveePaper.opacity(0.82))
     }
 
     private func send() {

@@ -76,7 +76,7 @@ struct RecommendationCardView: View {
             }
         }
         .padding(14)
-        .arveeCard(cornerRadius: 12)
+        .arveePremiumGlassCard(accent: .arveeTeal, cornerRadius: 12)
     }
 
     private func sideLabel(_ text: String, color: Color) -> some View {

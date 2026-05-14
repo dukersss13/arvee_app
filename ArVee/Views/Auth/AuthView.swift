@@ -220,15 +220,7 @@ struct AuthView: View {
             .disabled(viewModel.isLoading)
         }
         .padding(22)
-        .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(.ultraThinMaterial)
-                .shadow(color: Color.arveeInk.opacity(0.06), radius: 16, x: 0, y: 8)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .stroke(Color.arveeLine, lineWidth: 0.5)
-        )
+        .arveePremiumGlassCard(accent: .arveeTeal, cornerRadius: 20)
         .offset(y: appeared ? 0 : 20)
         .opacity(appeared ? 1.0 : 0.0)
     }
@@ -293,15 +285,7 @@ struct AuthView: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 14)
-            .background(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(Color.arveeCardElevated)
-                    .shadow(color: Color.arveeInk.opacity(0.04), radius: 8, x: 0, y: 3)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .stroke(Color.arveeLine, lineWidth: 0.7)
-            )
+            .arveePremiumGlassCard(accent: .arveeCoral, cornerRadius: 14)
             .contentShape(Rectangle())
         }
         .disabled(viewModel.isLoading)

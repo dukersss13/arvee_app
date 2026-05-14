@@ -81,7 +81,7 @@ struct ValidationView: View {
                     .padding(.horizontal, 16)
             }
             .padding(22)
-            .arveeCard(cornerRadius: 20)
+            .arveePremiumGlassCard(accent: .arveeTeal, cornerRadius: 20)
             .padding(.horizontal, 20)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -111,7 +111,7 @@ struct ValidationView: View {
                     .padding(.horizontal, 16)
             }
             .padding(22)
-            .arveeCard(cornerRadius: 20)
+            .arveePremiumGlassCard(accent: .arveeCoral, cornerRadius: 20)
             .padding(.horizontal, 20)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -310,7 +310,7 @@ struct ValidationView: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .arveeGradientCard(accent: accentColor, cornerRadius: 14)
+        .arveePremiumGlassCard(accent: accentColor, cornerRadius: 14)
     }
 
     // MARK: - Collapsible Section

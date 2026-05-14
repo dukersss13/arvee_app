@@ -7,13 +7,26 @@ struct ArveeCardModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .background(Color.arveeCard)
+            .background(
+                ZStack {
+                    RoundedRectangle(cornerRadius: cornerRadius)
+                        .fill(Color.arveeGlassBase)
+                    RoundedRectangle(cornerRadius: cornerRadius)
+                        .fill(
+                            LinearGradient(
+                                colors: [Color.arveeGlassHighlight, Color.clear],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                }
+            )
             .cornerRadius(cornerRadius)
             .overlay(
                 RoundedRectangle(cornerRadius: cornerRadius)
-                    .stroke(Color.arveeLine, lineWidth: 0.5)
+                    .stroke(Color.arveeGlassStroke, lineWidth: 0.9)
             )
-            .shadow(color: Color.arveeInk.opacity(0.08), radius: 12, x: 0, y: 4)
+            .shadow(color: Color.arveeInk.opacity(0.12), radius: 18, x: 0, y: 10)
     }
 }
 
@@ -29,11 +42,25 @@ struct ArveePageBackground: ViewModifier {
     func body(content: Content) -> some View {
         content
             .background(
-                LinearGradient(
-                    colors: [Color.arveePaper, Color.arveeSand.opacity(0.35)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
+                ZStack {
+                    LinearGradient(
+                        colors: [Color.arveePaper, Color.arveeSand.opacity(0.44)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                    RadialGradient(
+                        colors: [Color.arveeGlowTeal, Color.clear],
+                        center: .topTrailing,
+                        startRadius: 10,
+                        endRadius: 420
+                    )
+                    RadialGradient(
+                        colors: [Color.arveeGlowCoral.opacity(0.65), Color.clear],
+                        center: .bottomLeading,
+                        startRadius: 10,
+                        endRadius: 380
+                    )
+                }
                 .ignoresSafeArea()
             )
     }
@@ -60,7 +87,11 @@ struct ArveePrimaryButtonStyle: ButtonStyle {
             .background(
                 Group {
                     if isEnabled {
-                        Color.arveeTealGradient
+                        LinearGradient(
+                            colors: [Color.arveeTeal, Color.arveeTealDark, Color.arveeTealDark.opacity(0.92)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
                     } else {
                         LinearGradient(
                             colors: [Color.arveeTeal.opacity(0.4), Color.arveeTealDark.opacity(0.4)],
@@ -71,7 +102,11 @@ struct ArveePrimaryButtonStyle: ButtonStyle {
                 }
             )
             .cornerRadius(11)
-            .shadow(color: Color.arveeTeal.opacity(configuration.isPressed ? 0 : 0.2), radius: 8, x: 0, y: 4)
+            .overlay(
+                RoundedRectangle(cornerRadius: 11)
+                    .stroke(Color.white.opacity(0.34), lineWidth: 0.9)
+            )
+            .shadow(color: Color.arveeTeal.opacity(configuration.isPressed ? 0 : 0.34), radius: 14, x: 0, y: 8)
             .scaleEffect(configuration.isPressed ? 0.96 : 1.0)
             .animation(.easeInOut(duration: 0.12), value: configuration.isPressed)
     }
@@ -233,6 +268,51 @@ struct ArveeGradientCardModifier: ViewModifier {
 extension View {
     func arveeGradientCard(accent: Color = .arveeTeal, cornerRadius: CGFloat = 16) -> some View {
         modifier(ArveeGradientCardModifier(accentColor: accent, cornerRadius: cornerRadius))
+    }
+}
+
+// MARK: - Premium Glass Card
+
+struct ArveePremiumGlassCardModifier: ViewModifier {
+    var accent: Color = .arveeTeal
+    var cornerRadius: CGFloat = 18
+
+    func body(content: Content) -> some View {
+        content
+            .background(
+                ZStack(alignment: .topLeading) {
+                    RoundedRectangle(cornerRadius: cornerRadius)
+                        .fill(Color.arveeGlassBase)
+                    RoundedRectangle(cornerRadius: cornerRadius)
+                        .fill(
+                            LinearGradient(
+                                colors: [accent.opacity(0.20), accent.opacity(0.04), Color.clear],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                    RoundedRectangle(cornerRadius: cornerRadius)
+                        .fill(
+                            LinearGradient(
+                                colors: [Color.arveeGlassHighlight, Color.clear],
+                                startPoint: .top,
+                                endPoint: .center
+                            )
+                        )
+                }
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: cornerRadius)
+                    .stroke(Color.arveeGlassStroke, lineWidth: 1.0)
+            )
+            .shadow(color: accent.opacity(0.14), radius: 22, x: 0, y: 12)
+            .shadow(color: Color.arveeInk.opacity(0.10), radius: 8, x: 0, y: 3)
+    }
+}
+
+extension View {
+    func arveePremiumGlassCard(accent: Color = .arveeTeal, cornerRadius: CGFloat = 18) -> some View {
+        modifier(ArveePremiumGlassCardModifier(accent: accent, cornerRadius: cornerRadius))
     }
 }
 
@@ -417,6 +497,6 @@ struct ArveeMetricCard: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .arveeGradientCard(accent: accentColor, cornerRadius: 14)
+        .arveePremiumGlassCard(accent: accentColor, cornerRadius: 14)
     }
 }

@@ -99,7 +99,7 @@ struct DiscrepancyCardView: View {
             }
         }
         .padding(14)
-        .arveeCard(cornerRadius: 12)
+        .arveePremiumGlassCard(accent: .arveeCoral, cornerRadius: 12)
         .onAppear {
             adjustedAmount = row.value(for: "Transaction Total")
         }

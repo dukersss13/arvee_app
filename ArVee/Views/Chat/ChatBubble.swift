@@ -23,11 +23,21 @@ struct ChatBubble: View {
                 }
                 .padding(12)
                 .foregroundColor(isUser ? .white : .arveeInk)
-                .background(isUser ? AnyShapeStyle(Color.arveeTealGradient) : AnyShapeStyle(Color.white))
+                .background(
+                    isUser
+                        ? AnyShapeStyle(Color.arveeTealGradient)
+                        : AnyShapeStyle(
+                            LinearGradient(
+                                colors: [Color.arveeGlassHighlight, Color.arveeGlassBase],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                )
                 .clipShape(BubbleShape(isUser: isUser))
                 .overlay(
                     BubbleShape(isUser: isUser)
-                        .stroke(isUser ? Color.clear : Color.arveeLine, lineWidth: 0.5)
+                        .stroke(isUser ? Color.clear : Color.arveeGlassStroke, lineWidth: 0.8)
                 )
                 .shadow(color: isUser ? Color.clear : Color.arveeInk.opacity(0.06), radius: 5, x: 0, y: 2)
                 .opacity((message.isPending && !isUser) ? (pendingPulse ? 1.0 : 0.4) : 1.0)
@@ -92,7 +102,7 @@ struct ChatBubble: View {
                     }
                 }
                 .padding(12)
-                .arveeCard(cornerRadius: 14)
+                .arveePremiumGlassCard(accent: .arveeTeal, cornerRadius: 14)
                 .padding(.trailing, 60)
             }
         }

@@ -46,6 +46,13 @@ extension Color {
     // Elevated card surface — slightly more opaque than arveeCard
     static let arveeCardElevated = Color(light: .init(white: 1.0, alpha: 0.94), dark: .init(hex: 0x2A2724, alpha: 0.95))
 
+    // Glass layers for premium fintech card surfaces
+    static let arveeGlassBase = Color(light: .init(white: 1.0, alpha: 0.70), dark: .init(hex: 0x221F1D, alpha: 0.82))
+    static let arveeGlassHighlight = Color(light: .init(white: 1.0, alpha: 0.48), dark: .init(hex: 0xF0EBE2, alpha: 0.06))
+    static let arveeGlassStroke = Color(light: .init(hex: 0xFFFFFF, alpha: 0.52), dark: .init(hex: 0xF0EBE2, alpha: 0.18))
+    static let arveeGlowTeal = Color(light: .init(hex: 0x4EA8DE, alpha: 0.24), dark: .init(hex: 0x73BCF7, alpha: 0.22))
+    static let arveeGlowCoral = Color(light: .init(hex: 0xEA8F58, alpha: 0.22), dark: .init(hex: 0xEA8F58, alpha: 0.20))
+
     // Soft blue background — subtle tint for sections
     static let arveeTealSoft = Color(light: .init(hex: 0x4EA8DE, alpha: 0.08), dark: .init(hex: 0x73BCF7, alpha: 0.11))
 
@@ -71,6 +78,14 @@ extension Color {
     static var arveeTealGradient: LinearGradient {
         LinearGradient(
             colors: [.arveeTeal, .arveeTealDark],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
+
+    static var arveeInkGradient: LinearGradient {
+        LinearGradient(
+            colors: [Color.arveeInk, Color.arveeInk.opacity(0.88)],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
         )

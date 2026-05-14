@@ -269,7 +269,7 @@ struct UploadView: View {
             }
         }
         .padding(16)
-        .arveeCard()
+        .arveePremiumGlassCard(accent: .arveeTeal)
         .padding(.horizontal, 16)
         .sheet(item: $previewImage) { item in
             NavigationStack {
@@ -348,7 +348,7 @@ struct UploadView: View {
         }
         .padding(24)
         .frame(maxWidth: .infinity)
-        .arveeGradientCard(accent: .arveeTeal, cornerRadius: 16)
+        .arveePremiumGlassCard(accent: .arveeTeal, cornerRadius: 16)
         .padding(.horizontal, 16)
     }
 
@@ -384,7 +384,7 @@ struct UploadView: View {
         }
         .padding(24)
         .frame(maxWidth: .infinity)
-        .arveeGradientCard(accent: .arveeSuccess, cornerRadius: 16)
+        .arveePremiumGlassCard(accent: .arveeSuccess, cornerRadius: 16)
         .padding(.horizontal, 16)
     }
 

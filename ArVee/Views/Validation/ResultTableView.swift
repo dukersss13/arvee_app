@@ -97,7 +97,7 @@ struct ResultTableView: View {
             }
         }
         .padding(14)
-        .arveeCard(cornerRadius: 12)
+        .arveePremiumGlassCard(accent: .arveeTeal, cornerRadius: 12)
     }
 
     private func formatHeader(_ key: String) -> String {

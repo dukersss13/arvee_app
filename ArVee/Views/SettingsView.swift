@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @AppStorage("apiBaseURL") private var apiBaseURL = "https://arvee-backend-5hqe7uiuka-uc.a.run.app"
+    @AppStorage("apiBaseURL") private var apiBaseURL = APIService.defaultBaseURL
     @ObservedObject var authViewModel: AuthViewModel
     @State private var isConnected: Bool? = nil
     @State private var isChecking = false
