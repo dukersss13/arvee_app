@@ -189,39 +189,9 @@ struct BubbleShape: Shape {
 
     func path(in rect: CGRect) -> Path {
         let r = min(radius, min(rect.width, rect.height) / 2)
-        let tail = max(4, min(tailSize, 10))
         var path = Path()
 
         path.addRoundedRect(in: rect, cornerSize: CGSize(width: r, height: r))
-
-        let tailPath = Path { p in
-            if isUser {
-                let baseY = rect.maxY - r - 1
-                p.move(to: CGPoint(x: rect.maxX - r + 2, y: baseY - 3))
-                p.addQuadCurve(
-                    to: CGPoint(x: rect.maxX + tail, y: baseY + 3),
-                    control: CGPoint(x: rect.maxX + tail * 0.5, y: baseY)
-                )
-                p.addQuadCurve(
-                    to: CGPoint(x: rect.maxX - r + 1, y: baseY + 7),
-                    control: CGPoint(x: rect.maxX + tail * 0.35, y: baseY + 8)
-                )
-            } else {
-                let baseY = rect.maxY - r - 1
-                p.move(to: CGPoint(x: rect.minX + r - 2, y: baseY - 3))
-                p.addQuadCurve(
-                    to: CGPoint(x: rect.minX - tail, y: baseY + 3),
-                    control: CGPoint(x: rect.minX - tail * 0.5, y: baseY)
-                )
-                p.addQuadCurve(
-                    to: CGPoint(x: rect.minX + r - 1, y: baseY + 7),
-                    control: CGPoint(x: rect.minX - tail * 0.35, y: baseY + 8)
-                )
-            }
-            p.closeSubpath()
-        }
-
-        path.addPath(tailPath)
         return path
     }
 }

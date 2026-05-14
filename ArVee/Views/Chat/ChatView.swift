@@ -235,6 +235,12 @@ struct ChatView: View {
     }
 
     private func sendQuickReply(_ reply: String) {
+        if viewModel.handleUploadQuickReply(reply) {
+            showingQuickSuggestions = false
+            inputFocused = false
+            return
+        }
+
         viewModel.inputText = reply
         send()
     }

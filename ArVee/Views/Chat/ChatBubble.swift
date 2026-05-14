@@ -32,17 +32,17 @@ struct ChatBubble: View {
                                 .font(.system(.body, design: .rounded))
                                 .lineSpacing(2)
                                 .textSelection(.enabled)
-                                .opacity((message.isPending && !isUser) ? (pendingTextPulse ? 1.0 : 0.35) : 1.0)
+                                .opacity(shouldPulseText ? (pendingTextPulse ? 1.0 : 0.35) : 1.0)
                         }
                     }
                     .padding(.horizontal, 14)
                     .padding(.vertical, 12)
                     .foregroundColor(isUser ? .white : .arveeInk)
-                    .frame(maxWidth: 320, alignment: .leading)
+                    .frame(maxWidth: 304, alignment: .leading)
                     .background(bubbleFill)
-                    .clipShape(BubbleShape(isUser: isUser, radius: bubbleCornerRadius, tailSize: 7))
+                    .clipShape(BubbleShape(isUser: isUser, radius: bubbleCornerRadius, tailSize: 0))
                     .overlay(
-                        BubbleShape(isUser: isUser, radius: bubbleCornerRadius, tailSize: 7)
+                        BubbleShape(isUser: isUser, radius: bubbleCornerRadius, tailSize: 0)
                             .stroke(bubbleStroke, lineWidth: isUser ? 0.6 : 1.0)
                     )
                     .overlay(alignment: .top) {
@@ -60,10 +60,13 @@ struct ChatBubble: View {
                     .shadow(color: bubbleShadowColor, radius: isUser ? 14 : 10, x: 0, y: isUser ? 8 : 4)
                     .shadow(color: Color.arveeInk.opacity(isUser ? 0.05 : 0.08), radius: 4, x: 0, y: 2)
                     .onAppear {
-                        updatePendingPulse(isActive: message.isPending && !isUser)
+                        updatePendingPulse(isActive: shouldPulseText)
                     }
                     .onChange(of: message.isPending) { _, isPending in
-                        updatePendingPulse(isActive: isPending && !isUser)
+                        updatePendingPulse(isActive: isPending && !isUser && message.isBuffering)
+                    }
+                    .onChange(of: message.isBuffering) { _, isBuffering in
+                        updatePendingPulse(isActive: message.isPending && !isUser && isBuffering)
                     }
                 }
 
@@ -177,6 +180,10 @@ struct ChatBubble: View {
 
     private var bubbleShadowColor: Color {
         isUser ? Color.arveeTeal.opacity(0.24) : Color.arveeInk.opacity(0.10)
+    }
+
+    private var shouldPulseText: Bool {
+        message.isPending && !isUser && message.isBuffering
     }
 
     private func updatePendingPulse(isActive: Bool) {

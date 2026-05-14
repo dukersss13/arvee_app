@@ -9,6 +9,7 @@ struct ChatMessage: Identifiable {
     var topCategories: [CategoryValue]?
     var comparisonTable: ComparisonTable?
     var quickReplies: [String]?
+    var isBuffering: Bool = false
 
     enum Role: String {
         case user, assistant

@@ -13,6 +13,17 @@ final class ChatViewModel: ObservableObject {
     private let api = APIService.shared
     private var stateSyncHandler: ((String) async -> Void)?
     private var bufferingTask: Task<Void, Never>?
+    private var consumedUploadQuickReplies: Set<String> = []
+
+    private let uploadQuickReplyOrder = [
+        "How do I upload Transactions/Proofs?",
+        "What should I do after upload?",
+    ]
+
+    private let uploadQuickReplyResponses = [
+        "How do I upload Transactions/Proofs?": "You can upload them in the Upload tab",
+        "What should I do after upload?": "Check the Results tab and ask ArVee agent any questions related to your results.",
+    ]
 
     private let whimsicalBufferMessages = [
         "Let me peek into your receipts...",
@@ -39,7 +50,8 @@ final class ChatViewModel: ObservableObject {
         let userMsg = ChatMessage(
             role: .user, text: text, isPending: false,
             chart: nil, topCategories: nil, comparisonTable: nil,
-            quickReplies: nil
+            quickReplies: nil,
+            isBuffering: false
         )
         messages.append(userMsg)
         inputText = ""
@@ -49,7 +61,8 @@ final class ChatViewModel: ObservableObject {
         let assistantMsg = ChatMessage(
             role: .assistant, text: placeholder, isPending: true,
             chart: nil, topCategories: nil, comparisonTable: nil,
-            quickReplies: nil
+            quickReplies: nil,
+            isBuffering: true
         )
         messages.append(assistantMsg)
         let assistantIndex = messages.count - 1
@@ -80,6 +93,7 @@ final class ChatViewModel: ObservableObject {
                 }
                 // Match web behavior: buffering pulse ends when first token arrives.
                 self.messages[assistantIndex].isPending = false
+                self.messages[assistantIndex].isBuffering = false
             }
             self.messages[assistantIndex].text += token
         }
@@ -105,6 +119,7 @@ final class ChatViewModel: ObservableObject {
             }
             self.stopBufferingUpdates()
             self.messages[assistantIndex].isPending = false
+            self.messages[assistantIndex].isBuffering = false
 
             let serverAnswer = response.answer?.trimmingCharacters(in: .whitespacesAndNewlines)
 
@@ -145,6 +160,7 @@ final class ChatViewModel: ObservableObject {
             }
             self.stopBufferingUpdates()
             self.messages[assistantIndex].isPending = false
+            self.messages[assistantIndex].isBuffering = false
             self.messages[assistantIndex].text = "Error: \(msg)"
             self.isStreaming = false
             self.processingStage = nil
@@ -164,6 +180,7 @@ final class ChatViewModel: ObservableObject {
         processingPercent = nil
         if let last = messages.indices.last, messages[last].isPending {
             messages[last].isPending = false
+            messages[last].isBuffering = false
             if messages[last].text.isEmpty || isBufferingMessage(messages[last].text) {
                 messages[last].text = "No problem. I stopped that request. Ask me anything else when you're ready."
             }
@@ -174,6 +191,47 @@ final class ChatViewModel: ObservableObject {
         cancelStream()
         messages = []
         errorMessage = nil
+        consumedUploadQuickReplies = []
+    }
+
+    @discardableResult
+    func handleUploadQuickReply(_ reply: String) -> Bool {
+        guard let response = uploadQuickReplyResponses[reply] else {
+            return false
+        }
+
+        messages.append(
+            ChatMessage(
+                role: .user,
+                text: reply,
+                isPending: false,
+                chart: nil,
+                topCategories: nil,
+                comparisonTable: nil,
+                quickReplies: nil,
+                isBuffering: false
+            )
+        )
+
+        consumedUploadQuickReplies.insert(reply)
+        let remainingReplies = uploadQuickReplyOrder.filter {
+            !consumedUploadQuickReplies.contains($0)
+        }
+
+        messages.append(
+            ChatMessage(
+                role: .assistant,
+                text: response,
+                isPending: false,
+                chart: nil,
+                topCategories: nil,
+                comparisonTable: nil,
+                quickReplies: remainingReplies.isEmpty ? nil : remainingReplies,
+                isBuffering: false
+            )
+        )
+
+        return true
     }
 
     private func startBufferingUpdates(for assistantIndex: Int) {
