@@ -10,11 +10,14 @@ final class ValidationSSEClient: NSObject, URLSessionDataDelegate {
     var onDone: ((ValidationResponse) -> Void)?
     var onError: ((String) -> Void)?
 
-    func start(url: URL, body: Data, contentType: String) {
+    func start(url: URL, body: Data, contentType: String, headers: [String: String] = [:]) {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue(contentType, forHTTPHeaderField: "Content-Type")
         request.setValue("text/event-stream", forHTTPHeaderField: "Accept")
+        for (key, value) in headers {
+            request.setValue(value, forHTTPHeaderField: key)
+        }
         request.httpBody = body
 
         let config = URLSessionConfiguration.default
