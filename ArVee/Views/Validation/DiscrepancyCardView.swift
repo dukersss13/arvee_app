@@ -1,5 +1,11 @@
 import SwiftUI
 
+private let discrepancyFontScale: CGFloat = 1.05
+
+private func scaledDiscrepancyFont(_ base: CGFloat) -> CGFloat {
+    base * discrepancyFontScale
+}
+
 /// Interactive card for a discrepancy row — lets the user adjust the amount and accept.
 struct DiscrepancyCardView: View {
     let row: ResultRow
@@ -36,10 +42,10 @@ struct DiscrepancyCardView: View {
             if let reason = row.fields["Reason"], !reason.isEmpty {
                 HStack(spacing: 4) {
                     Image(systemName: "info.circle")
-                        .font(.system(size: 10))
+                        .font(.system(size: scaledDiscrepancyFont(10)))
                         .foregroundColor(.arveeInkMuted)
                     Text(reason)
-                        .font(.system(.caption2, design: .rounded))
+                        .font(.system(size: scaledDiscrepancyFont(11), weight: .regular, design: .rounded))
                         .foregroundColor(.arveeInkMuted)
                 }
             }
@@ -50,14 +56,14 @@ struct DiscrepancyCardView: View {
             HStack(spacing: 10) {
                 VStack(alignment: .leading, spacing: 3) {
                     Text("Adjusted Amount")
-                        .font(.system(size: 10, weight: .semibold, design: .rounded))
+                        .font(.system(size: scaledDiscrepancyFont(10), weight: .semibold, design: .rounded))
                         .foregroundColor(.arveeInkMuted)
                     TextField(
                         row.value(for: "Transaction Total"),
                         text: $adjustedAmount
                     )
                     .keyboardType(.decimalPad)
-                    .font(.system(.subheadline, design: .monospaced))
+                    .font(.system(size: scaledDiscrepancyFont(15), weight: .regular, design: .monospaced))
                     .padding(.horizontal, 10)
                     .padding(.vertical, 8)
                     .background(Color.arveeSand.opacity(0.3))
@@ -66,10 +72,10 @@ struct DiscrepancyCardView: View {
 
                 VStack(alignment: .leading, spacing: 3) {
                     Text("Comment")
-                        .font(.system(size: 10, weight: .semibold, design: .rounded))
+                        .font(.system(size: scaledDiscrepancyFont(10), weight: .semibold, design: .rounded))
                         .foregroundColor(.arveeInkMuted)
                     TextField("Optional", text: $comment)
-                        .font(.system(.subheadline, design: .rounded))
+                        .font(.system(size: scaledDiscrepancyFont(15), weight: .regular, design: .rounded))
                         .padding(.horizontal, 10)
                         .padding(.vertical, 8)
                         .background(Color.arveeSand.opacity(0.3))
@@ -84,7 +90,7 @@ struct DiscrepancyCardView: View {
                 onAccept(amount, trimmedComment.isEmpty ? nil : trimmedComment)
             } label: {
                 Label("Accept Match", systemImage: "checkmark.circle.fill")
-                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                    .font(.system(size: scaledDiscrepancyFont(15), weight: .semibold, design: .rounded))
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 10)
@@ -101,7 +107,7 @@ struct DiscrepancyCardView: View {
 
     private func sideLabel(_ text: String, color: Color) -> some View {
         Text(text.uppercased())
-            .font(.system(size: 9, weight: .bold, design: .rounded))
+            .font(.system(size: scaledDiscrepancyFont(9), weight: .bold, design: .rounded))
             .foregroundColor(color)
             .tracking(0.5)
     }
@@ -109,10 +115,10 @@ struct DiscrepancyCardView: View {
     private func fieldColumn(_ label: String, _ value: String) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(label)
-                .font(.system(size: 9, weight: .semibold, design: .rounded))
+                .font(.system(size: scaledDiscrepancyFont(9), weight: .semibold, design: .rounded))
                 .foregroundColor(.arveeInkMuted)
             Text(value.isEmpty ? "—" : value)
-                .font(.system(size: 13.2, weight: .regular, design: .rounded))
+                .font(.system(size: scaledDiscrepancyFont(13.2), weight: .regular, design: .rounded))
                 .foregroundColor(.arveeInk)
                 .lineLimit(1)
         }

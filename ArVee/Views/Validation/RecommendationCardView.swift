@@ -1,5 +1,11 @@
 import SwiftUI
 
+private let recommendationFontScale: CGFloat = 1.05
+
+private func scaledRecommendationFont(_ base: CGFloat) -> CGFloat {
+    base * recommendationFontScale
+}
+
 /// Card for a single recommendation — shows the suggested match and an Accept button.
 struct RecommendationCardView: View {
     let row: ResultRow
@@ -11,11 +17,12 @@ struct RecommendationCardView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Button(action: onToggleSelected) {
-                    Label(
-                        isSelected ? "Selected" : "Select",
-                        systemImage: isSelected ? "checkmark.square.fill" : "square"
-                    )
-                    .font(.system(.caption, design: .rounded).weight(.semibold))
+                    HStack(spacing: 6) {
+                        Image(systemName: isSelected ? "checkmark.square.fill" : "square")
+                            .font(.system(size: scaledRecommendationFont(13), weight: .semibold, design: .rounded))
+                        Text(isSelected ? "Selected" : "Select")
+                            .font(.system(size: scaledRecommendationFont(12), weight: .semibold, design: .rounded))
+                    }
                     .foregroundColor(isSelected ? .arveeTeal : .arveeInkMuted)
                 }
                 .buttonStyle(.plain)
@@ -49,10 +56,10 @@ struct RecommendationCardView: View {
             if let reason = row.fields["Reason"], !reason.isEmpty {
                 HStack(spacing: 4) {
                     Image(systemName: "sparkles")
-                        .font(.system(size: 10))
+                        .font(.system(size: scaledRecommendationFont(10)))
                         .foregroundColor(.arveeTeal)
                     Text(reason)
-                        .font(.system(size: 13.1, weight: .medium, design: .rounded))
+                        .font(.system(size: scaledRecommendationFont(13.1), weight: .medium, design: .rounded))
                         .foregroundColor(.arveeInkMuted)
                 }
             }
@@ -60,7 +67,7 @@ struct RecommendationCardView: View {
             // Accept button
             Button(action: onAccept) {
                 Label("Accept", systemImage: "checkmark.circle.fill")
-                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                    .font(.system(size: scaledRecommendationFont(15), weight: .semibold, design: .rounded))
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 10)
@@ -74,7 +81,7 @@ struct RecommendationCardView: View {
 
     private func sideLabel(_ text: String, color: Color) -> some View {
         Text(text.uppercased())
-            .font(.system(size: 9, weight: .bold, design: .rounded))
+            .font(.system(size: scaledRecommendationFont(9), weight: .bold, design: .rounded))
             .foregroundColor(color)
             .tracking(0.5)
     }
@@ -82,10 +89,10 @@ struct RecommendationCardView: View {
     private func fieldColumn(_ label: String, _ value: String) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(label)
-                .font(.system(size: 9, weight: .semibold, design: .rounded))
+                .font(.system(size: scaledRecommendationFont(9), weight: .semibold, design: .rounded))
                 .foregroundColor(.arveeInkMuted)
             Text(value.isEmpty ? "—" : value)
-                .font(.system(size: 13.2, weight: .regular, design: .rounded))
+                .font(.system(size: scaledRecommendationFont(13.2), weight: .regular, design: .rounded))
                 .foregroundColor(.arveeInk)
                 .lineLimit(1)
         }

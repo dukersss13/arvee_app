@@ -1,5 +1,11 @@
 import SwiftUI
 
+private let resultsFontScale: CGFloat = 1.05
+
+private func scaledResultsFont(_ base: CGFloat) -> CGFloat {
+    base * resultsFontScale
+}
+
 struct ValidationView: View {
     @ObservedObject var sessionVM: SessionViewModel
     @ObservedObject var viewModel: ValidationViewModel
@@ -161,13 +167,13 @@ struct ValidationView: View {
                                 .font(.system(size: 14, weight: .semibold))
                                 .foregroundColor(.arveeTeal)
                             Text("Need to pair unmatched transactions and proofs?")
-                                .font(.system(.caption, design: .rounded))
+                                .font(.system(size: scaledResultsFont(12), weight: .regular, design: .rounded))
                                 .foregroundColor(.arveeInkMuted)
                             Spacer()
                             Button("Manual Match") {
                                 showManualMatch = true
                             }
-                            .font(.system(.caption, design: .rounded).weight(.semibold))
+                            .font(.system(size: scaledResultsFont(12), weight: .semibold, design: .rounded))
                             .foregroundColor(.arveeTeal)
                         }
                         .padding(.horizontal, 12)
@@ -247,7 +253,7 @@ struct ValidationView: View {
                             selectedRecommendationIds.removeAll()
                         } label: {
                             Text("Accept All Recommendations")
-                                .font(.system(.caption, design: .rounded).weight(.semibold))
+                                .font(.system(size: scaledResultsFont(12), weight: .semibold, design: .rounded))
                                 .foregroundColor(.arveeTeal)
                         }
                         .padding(.horizontal, 16)
@@ -289,7 +295,7 @@ struct ValidationView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text(label.uppercased())
-                    .font(.system(size: 10, weight: .semibold, design: .rounded))
+                    .font(.system(size: scaledResultsFont(10), weight: .semibold, design: .rounded))
                     .foregroundColor(.arveeInkMuted)
                     .tracking(0.5)
                 Spacer()
@@ -298,7 +304,7 @@ struct ValidationView: View {
                     .foregroundColor(accentColor.opacity(0.6))
             }
             Text("\(value)")
-                .font(.system(size: 28.8, weight: .bold, design: .rounded))
+                .font(.system(size: scaledResultsFont(28.8), weight: .bold, design: .rounded))
                 .foregroundColor(.arveeInk)
                 .contentTransition(.numericText())
         }
@@ -322,47 +328,50 @@ struct ValidationView: View {
         VStack(alignment: .leading, spacing: 8) {
             // Header
             HStack(spacing: 8) {
-                Image(systemName: icon)
-                    .font(.caption)
-                    .foregroundColor(accentColor)
-                Text(title)
-                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                    .foregroundColor(.arveeInk)
-                Text("\(count)")
-                    .font(.system(size: 11, weight: .bold, design: .rounded))
-                    .foregroundColor(accentColor)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(accentColor.opacity(0.1))
-                    .cornerRadius(6)
-                Spacer()
+                Button {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        if expandedSections.contains(section) {
+                            expandedSections.remove(section)
+                        } else {
+                            expandedSections.insert(section)
+                        }
+                    }
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: icon)
+                            .font(.caption)
+                            .foregroundColor(accentColor)
+                        Text(title)
+                            .font(.system(size: scaledResultsFont(15), weight: .semibold, design: .rounded))
+                            .foregroundColor(.arveeInk)
+                        Text("\(count)")
+                            .font(.system(size: scaledResultsFont(11), weight: .bold, design: .rounded))
+                            .foregroundColor(accentColor)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(accentColor.opacity(0.1))
+                            .cornerRadius(6)
+                        Spacer()
+                        Image(systemName: expandedSections.contains(section) ? "chevron.up" : "chevron.down")
+                            .font(.caption.weight(.semibold))
+                            .foregroundColor(.arveeInkMuted)
+                    }
+                }
+                .buttonStyle(.plain)
+                .contentShape(Rectangle())
 
                 if let action {
                     Button(action: action.1) {
                         Text(action.0)
-                            .font(.system(.caption, design: .rounded).weight(.semibold))
+                            .font(.system(size: scaledResultsFont(12), weight: .semibold, design: .rounded))
                             .foregroundColor(action.0 == "Select items" ? .arveeInkMuted : .arveeTeal)
                     }
                     .buttonStyle(.plain)
                     .disabled(action.0 == "Select items")
                 }
-
-                Image(systemName: expandedSections.contains(section) ? "chevron.up" : "chevron.down")
-                    .font(.caption.weight(.semibold))
-                    .foregroundColor(.arveeInkMuted)
             }
             .id(section.rawValue)
             .padding(.horizontal, 16)
-            .contentShape(Rectangle())
-            .onTapGesture {
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    if expandedSections.contains(section) {
-                        expandedSections.remove(section)
-                    } else {
-                        expandedSections.insert(section)
-                    }
-                }
-            }
 
             // Content
             if expandedSections.contains(section) {
@@ -430,44 +439,44 @@ struct ResultCardView: View {
             // Transaction
             HStack {
                 Text("TX")
-                    .font(.system(size: 9, weight: .bold, design: .rounded))
+                    .font(.system(size: scaledResultsFont(9), weight: .bold, design: .rounded))
                     .foregroundColor(.arveeTeal)
                     .tracking(0.5)
                 Text(row.value(for: "Transaction Business Name"))
-                    .font(.system(size: 13.2, weight: .medium, design: .rounded))
+                    .font(.system(size: scaledResultsFont(13.2), weight: .medium, design: .rounded))
                     .foregroundColor(.arveeInk)
                     .lineLimit(1)
                 Spacer()
                 Text(row.value(for: "Transaction Date"))
-                    .font(.system(size: 12.1, weight: .regular, design: .rounded))
+                    .font(.system(size: scaledResultsFont(12.1), weight: .regular, design: .rounded))
                     .foregroundColor(.arveeInkMuted)
                 if let txCategory = matchedCategory(primary: "Transaction Category", fallback: "Category") {
                     categoryChip(txCategory)
                 }
                 Text(row.value(for: "Transaction Total"))
-                    .font(.system(size: 13.2, weight: .bold, design: .rounded).monospacedDigit())
+                    .font(.system(size: scaledResultsFont(13.2), weight: .bold, design: .rounded).monospacedDigit())
                     .foregroundColor(.arveeInk)
             }
 
             // Proof
             HStack {
                 Text("PR")
-                    .font(.system(size: 9, weight: .bold, design: .rounded))
+                    .font(.system(size: scaledResultsFont(9), weight: .bold, design: .rounded))
                     .foregroundColor(.arveeCoral)
                     .tracking(0.5)
                 Text(row.value(for: "Proof Business Name"))
-                    .font(.system(size: 13.2, weight: .medium, design: .rounded))
+                    .font(.system(size: scaledResultsFont(13.2), weight: .medium, design: .rounded))
                     .foregroundColor(.arveeInk)
                     .lineLimit(1)
                 Spacer()
                 Text(row.value(for: "Proof Date"))
-                    .font(.system(size: 12.1, weight: .regular, design: .rounded))
+                    .font(.system(size: scaledResultsFont(12.1), weight: .regular, design: .rounded))
                     .foregroundColor(.arveeInkMuted)
                 if let proofCategory = matchedCategory(primary: "Proof Category", fallback: "Category") {
                     categoryChip(proofCategory)
                 }
                 Text(row.value(for: "Proof Total"))
-                    .font(.system(size: 13.2, weight: .bold, design: .rounded).monospacedDigit())
+                    .font(.system(size: scaledResultsFont(13.2), weight: .bold, design: .rounded).monospacedDigit())
                     .foregroundColor(.arveeInk)
             }
 
@@ -475,7 +484,7 @@ struct ResultCardView: View {
             let status = row.value(for: "Result").isEmpty ? row.value(for: "Reason") : row.value(for: "Result")
             if !status.isEmpty {
                 Text(status)
-                    .font(.system(size: 10, design: .rounded))
+                    .font(.system(size: scaledResultsFont(10), design: .rounded))
                     .foregroundColor(.arveeInkMuted)
                     .lineLimit(1)
             }
@@ -493,7 +502,7 @@ struct ResultCardView: View {
 
     private func categoryChip(_ value: String) -> some View {
         Text(value)
-            .font(.system(size: 10, weight: .medium, design: .rounded))
+            .font(.system(size: scaledResultsFont(10), weight: .medium, design: .rounded))
             .foregroundColor(.arveeTeal)
             .padding(.horizontal, 6)
             .padding(.vertical, 2)
@@ -510,7 +519,7 @@ struct ResultCardView: View {
                     : row.value(for: "Business Name")
                 if !name.isEmpty {
                     Text(name)
-                        .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                        .font(.system(size: scaledResultsFont(15), weight: .semibold, design: .rounded))
                         .foregroundColor(.arveeInk)
                         .lineLimit(1)
                 }
@@ -520,7 +529,7 @@ struct ResultCardView: View {
                         : row.value(for: "Date")
                     if !date.isEmpty {
                         Text(date)
-                            .font(.caption)
+                            .font(.system(size: scaledResultsFont(12), weight: .regular, design: .rounded))
                             .foregroundColor(.arveeInkMuted)
                     }
                     let category = row.value(for: "Category").isEmpty
@@ -528,7 +537,7 @@ struct ResultCardView: View {
                         : row.value(for: "Category")
                     if !category.isEmpty {
                         Text(category)
-                            .font(.system(size: 10, weight: .medium, design: .rounded))
+                            .font(.system(size: scaledResultsFont(10), weight: .medium, design: .rounded))
                             .foregroundColor(.arveeTeal)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
@@ -543,7 +552,7 @@ struct ResultCardView: View {
                 : row.value(for: "Total")
             if !total.isEmpty {
                 Text("$\(total)")
-                    .font(.system(.subheadline, design: .rounded).weight(.bold).monospacedDigit())
+                    .font(.system(size: scaledResultsFont(15), weight: .bold, design: .rounded).monospacedDigit())
                     .foregroundColor(.arveeInk)
             }
         }
