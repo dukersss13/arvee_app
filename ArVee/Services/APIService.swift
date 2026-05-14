@@ -210,6 +210,20 @@ final class APIService {
         return try decoder.decode(AuthMeResponse.self, from: data)
     }
 
+    func getGoogleAuthConfig() async throws -> GoogleAuthConfigResponse {
+        let data = try await get(path: "/api/auth/google/config")
+        return try decoder.decode(GoogleAuthConfigResponse.self, from: data)
+    }
+
+    func loginWithGoogle(idToken: String) async throws -> AuthResponse {
+        let payload = ["idToken": idToken]
+        let body = try JSONSerialization.data(withJSONObject: payload)
+        let data = try await post(path: "/api/auth/google/token", body: body)
+        let response = try decoder.decode(AuthResponse.self, from: data)
+        setAuthSession(token: response.token, email: response.user.email)
+        return response
+    }
+
     func loadSessionInputs(sessionId: String) async throws -> SessionInputsResponse {
         let data = try await get(path: "/api/session/\(sessionId)")
         return try decoder.decode(SessionInputsResponse.self, from: data)

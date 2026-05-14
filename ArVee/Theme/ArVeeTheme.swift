@@ -10,8 +10,8 @@ extension Color {
     // Sandy tan — matches web --sand: #e9dbc1
     static let arveeSand = Color(light: .init(hex: 0xE9DBC1), dark: .init(hex: 0x2A2520))
 
-    // Soft mint — matches web --mint: #d2ece5
-    static let arveeMint = Color(light: .init(hex: 0xD2ECE5), dark: .init(hex: 0x1A2E29))
+    // Soft SAP blue tint for success/info surfaces
+    static let arveeMint = Color(light: .init(hex: 0xE3F2FD), dark: .init(hex: 0x1B2E42))
 
     // Primary text — matches web --ink: #1f1d1a
     static let arveeInk = Color(light: .init(hex: 0x1F1D1A), dark: .init(hex: 0xF0EBE2))
@@ -19,11 +19,11 @@ extension Color {
     // Muted text — matches web --ink-muted: #5a554d
     static let arveeInkMuted = Color(light: .init(hex: 0x5A554D), dark: .init(hex: 0xA39B8E))
 
-    // Primary teal — matches web --teal: #0f7b6c
-    static let arveeTeal = Color(light: .init(hex: 0x0F7B6C), dark: .init(hex: 0x2DB8A2))
+    // Primary SAP-inspired light blue
+    static let arveeTeal = Color(light: .init(hex: 0x4EA8DE), dark: .init(hex: 0x73BCF7))
 
-    // Teal dark — matches web --teal-dark: #0a5f53
-    static let arveeTealDark = Color(light: .init(hex: 0x0A5F53), dark: .init(hex: 0x1A8F7D))
+    // Deeper blue companion tone
+    static let arveeTealDark = Color(light: .init(hex: 0x1F78B4), dark: .init(hex: 0x4299E1))
 
     // Coral accent — matches web --coral: #ea8f58
     static let arveeCoral = Color(light: .init(hex: 0xEA8F58), dark: .init(hex: 0xEA8F58))
@@ -40,24 +40,24 @@ extension Color {
     // Table header background — matches web #f4ebda
     static let arveeTableHead = Color(light: .init(hex: 0xF4EBDA), dark: .init(hex: 0x2E2924))
 
-    // Success green — positive states
-    static let arveeSuccess = Color(light: .init(hex: 0x34A853), dark: .init(hex: 0x5CB176))
+    // Success accent aligned to the light-blue family
+    static let arveeSuccess = Color(light: .init(hex: 0x64B5F6), dark: .init(hex: 0x5AA8E8))
 
     // Elevated card surface — slightly more opaque than arveeCard
     static let arveeCardElevated = Color(light: .init(white: 1.0, alpha: 0.94), dark: .init(hex: 0x2A2724, alpha: 0.95))
 
-    // Soft teal background — subtle tint for sections
-    static let arveeTealSoft = Color(light: .init(hex: 0x0F7B6C, alpha: 0.06), dark: .init(hex: 0x2DB8A2, alpha: 0.08))
+    // Soft blue background — subtle tint for sections
+    static let arveeTealSoft = Color(light: .init(hex: 0x4EA8DE, alpha: 0.08), dark: .init(hex: 0x73BCF7, alpha: 0.11))
 
     // Step indicator colors
-    static let arveeStepComplete = Color(light: .init(hex: 0x0F7B6C), dark: .init(hex: 0x2DB8A2))
+    static let arveeStepComplete = Color(light: .init(hex: 0x4EA8DE), dark: .init(hex: 0x73BCF7))
     static let arveeStepActive = Color(light: .init(hex: 0xEA8F58), dark: .init(hex: 0xEA8F58))
     static let arveeStepPending = Color(light: .init(hex: 0x5A554D, alpha: 0.3), dark: .init(hex: 0xA39B8E, alpha: 0.3))
 
     // MARK: - Chart Palette (matching web SVG colors)
 
     static let arveeChartPalette: [Color] = [
-        Color(UIColor(hex: 0x0F7B6C)),   // teal
+        Color(UIColor(hex: 0x4EA8DE)),   // light blue
         Color(UIColor(hex: 0xE59F3A)),   // golden
         Color(UIColor(hex: 0x6F8A3B)),   // olive
         Color(UIColor(hex: 0xCF6B4D)),   // terracotta

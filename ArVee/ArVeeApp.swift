@@ -15,7 +15,7 @@ struct ArVeeApp: App {
 
         // Global appearance: warm paper theme
         let paperUI = UIColor { $0.userInterfaceStyle == .dark ? UIColor(hex: 0x1A1816) : UIColor(hex: 0xF4EFE4) }
-        let tealUI = UIColor { $0.userInterfaceStyle == .dark ? UIColor(hex: 0x2DB8A2) : UIColor(hex: 0x0F7B6C) }
+        let tealUI = UIColor { $0.userInterfaceStyle == .dark ? UIColor(hex: 0x73BCF7) : UIColor(hex: 0x4EA8DE) }
         let inkUI = UIColor { $0.userInterfaceStyle == .dark ? UIColor(hex: 0xF0EBE2) : UIColor(hex: 0x1F1D1A) }
 
         UITabBar.appearance().backgroundColor = paperUI

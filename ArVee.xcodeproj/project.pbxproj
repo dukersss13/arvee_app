@@ -470,6 +470,8 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = ArVee;
+				GOOGLE_OAUTH_REDIRECT_SCHEME = arvee;
+				INFOPLIST_KEY_CFBundleURLTypes = "[{\"CFBundleURLName\":\"google-oauth\",\"CFBundleURLSchemes\":[\"$(GOOGLE_OAUTH_REDIRECT_SCHEME)\"]}]";
 				INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsArbitraryLoads = YES;
 				INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsLocalNetworking = YES;
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "ArVee uses your local network to connect to your backend server.";
@@ -504,6 +506,8 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = ArVee;
+				GOOGLE_OAUTH_REDIRECT_SCHEME = arvee;
+				INFOPLIST_KEY_CFBundleURLTypes = "[{\"CFBundleURLName\":\"google-oauth\",\"CFBundleURLSchemes\":[\"$(GOOGLE_OAUTH_REDIRECT_SCHEME)\"]}]";
 				INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsArbitraryLoads = YES;
 				INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsLocalNetworking = YES;
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "ArVee uses your local network to connect to your backend server.";
