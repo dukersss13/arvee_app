@@ -87,10 +87,13 @@ final class AuthViewModel: ObservableObject {
     func submitGoogle() async {
         isLoading = true
         errorMessage = nil
+        defer { isLoading = false }
 
         do {
-            let config = try await api.getGoogleAuthConfig()
-            guard config.enabled else {
+            let config = try await withTimeout(seconds: 12) {
+                try await api.getGoogleAuthConfig()
+            }
+            guard config.enabled, !config.clientId.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
                 throw GoogleAuthError.notConfigured
             }
 
@@ -98,13 +101,30 @@ final class AuthViewModel: ObservableObject {
                 clientId: config.clientId,
                 redirectScheme: config.redirectScheme
             )
-            _ = try await api.loginWithGoogle(idToken: idToken)
+            _ = try await withTimeout(seconds: 20) {
+                try await api.loginWithGoogle(idToken: idToken)
+            }
             refreshAuthState()
+        } catch let error as GoogleAuthError {
+            if case .timedOut = error {
+                activeWebSession?.cancel()
+                activeWebSession = nil
+            }
+            errorMessage = error.localizedDescription
+        } catch let error as APIError {
+            switch error {
+            case .server(_, let message):
+                errorMessage = message
+            case .invalidURL:
+                errorMessage = "Google sign-in could not reach the backend. Check API Base URL in Settings."
+            }
+        } catch let error as NSError
+            where error.domain == ASWebAuthenticationSessionError.errorDomain
+                && error.code == ASWebAuthenticationSessionError.canceledLogin.rawValue {
+            errorMessage = "Google sign-in was canceled."
         } catch {
             errorMessage = error.localizedDescription
         }
-
-        isLoading = false
     }
 
     private func getGoogleIDToken(clientId: String, redirectScheme: String) async throws -> String {
@@ -247,6 +267,25 @@ final class AuthViewModel: ObservableObject {
             .replacingOccurrences(of: "/", with: "_")
             .replacingOccurrences(of: "=", with: "")
     }
+
+    private func withTimeout<T>(seconds: TimeInterval, operation: @escaping () async throws -> T) async throws -> T {
+        try await withThrowingTaskGroup(of: T.self) { group in
+            group.addTask {
+                try await operation()
+            }
+            group.addTask {
+                let nanos = UInt64(seconds * 1_000_000_000)
+                try await Task.sleep(nanoseconds: nanos)
+                throw GoogleAuthError.timedOut
+            }
+
+            guard let first = try await group.next() else {
+                throw GoogleAuthError.timedOut
+            }
+            group.cancelAll()
+            return first
+        }
+    }
 }
 
 private final class PresentationContextProvider: NSObject, ASWebAuthenticationPresentationContextProviding {
@@ -267,6 +306,7 @@ private enum GoogleAuthError: LocalizedError {
     case invalidState
     case missingCode
     case invalidTokenResponse
+    case timedOut
     case oauthError(String)
 
     var errorDescription: String? {
@@ -287,6 +327,8 @@ private enum GoogleAuthError: LocalizedError {
             return "Google did not return an authorization code."
         case .invalidTokenResponse:
             return "Google login succeeded, but token parsing failed."
+        case .timedOut:
+            return "Google sign-in timed out. Check your network and backend URL, then try again."
         case .oauthError(let message):
             return "Google login failed: \(message)"
         }

@@ -211,7 +211,18 @@ final class APIService {
     }
 
     func getGoogleAuthConfig() async throws -> GoogleAuthConfigResponse {
-        let data = try await get(path: "/api/auth/google/config")
+        var request = URLRequest(url: try makeURL(path: "/api/auth/google/config"))
+        request.httpMethod = "GET"
+        request.timeoutInterval = 12
+
+        let config = URLSessionConfiguration.ephemeral
+        config.timeoutIntervalForRequest = 12
+        config.timeoutIntervalForResource = 12
+        config.waitsForConnectivity = false
+
+        let fastSession = URLSession(configuration: config)
+        let (data, response) = try await fastSession.data(for: request)
+        try checkHTTPResponse(response, data: data)
         return try decoder.decode(GoogleAuthConfigResponse.self, from: data)
     }
 

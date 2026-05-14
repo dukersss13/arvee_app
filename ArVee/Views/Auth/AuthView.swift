@@ -216,6 +216,7 @@ struct AuthView: View {
                 .padding(.vertical, 14)
             }
             .buttonStyle(ArveePrimaryButtonStyle())
+            .scaleEffect(0.85)
             .disabled(viewModel.isLoading)
         }
         .padding(22)
