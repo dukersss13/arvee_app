@@ -35,9 +35,10 @@ struct ChatView: View {
                             inputFocused = false
                             showingQuickSuggestions = true
                         } label: {
-                            Label("Suggestions", systemImage: "chevron.backward")
-                                .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                            Image(systemName: "chevron.backward")
+                                .font(.system(size: 16, weight: .semibold))
                         }
+                        .accessibilityLabel("Back to quick suggestions")
                         .foregroundColor(.arveeTeal)
                     }
                 }
