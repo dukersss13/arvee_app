@@ -91,7 +91,7 @@ final class AuthViewModel: ObservableObject {
 
         do {
             let config = try await withTimeout(seconds: 12) {
-                try await api.getGoogleAuthConfig()
+                try await self.api.getGoogleAuthConfig()
             }
             guard config.enabled, !config.clientId.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
                 throw GoogleAuthError.notConfigured
@@ -102,7 +102,7 @@ final class AuthViewModel: ObservableObject {
                 redirectScheme: config.redirectScheme
             )
             _ = try await withTimeout(seconds: 20) {
-                try await api.loginWithGoogle(idToken: idToken)
+                try await self.api.loginWithGoogle(idToken: idToken)
             }
             refreshAuthState()
         } catch let error as GoogleAuthError {
