@@ -10,6 +10,14 @@ struct ChartCardView: View {
     @State private var selectedPieAmount: Double?
     @State private var showExpandedChart = false
 
+    private struct GroupedBarPoint: Identifiable {
+        let id: String
+        let category: String
+        let amount: Double
+        let periodName: String
+        let seriesIndex: Int
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .center, spacing: 8) {
@@ -114,19 +122,20 @@ struct ChartCardView: View {
 
     @ViewBuilder
     private var groupedBarChart: some View {
-        if let categories = chart.x, let series = chart.series {
+        let points = groupedBarPoints
+        if !points.isEmpty {
             Chart {
-                ForEach(Array(series.enumerated()), id: \.element.id) { idx, s in
-                    ForEach(Array(zip(categories, s.values)), id: \.0) { cat, val in
-                        BarMark(
-                            x: .value("Category", cat),
-                            y: .value("Amount", val)
-                        )
-                        .foregroundStyle(Color.arveeChartPalette[idx % Color.arveeChartPalette.count])
-                        .cornerRadius(4)
-                        .position(by: .value("Period", s.name))
-                        .opacity(selectedCategory == nil || selectedCategory == cat ? 1.0 : 0.45)
-                    }
+                ForEach(points) { point in
+                    BarMark(
+                        x: .value("Category", point.category),
+                        y: .value("Amount", point.amount)
+                    )
+                    .foregroundStyle(
+                        Color.arveeChartPalette[point.seriesIndex % Color.arveeChartPalette.count]
+                    )
+                    .cornerRadius(4)
+                    .position(by: .value("Period", point.periodName))
+                    .opacity(selectedCategory == nil || selectedCategory == point.category ? 1.0 : 0.45)
                 }
             }
             .chartXSelection(value: $selectedCategory)
@@ -244,6 +253,33 @@ struct ChartCardView: View {
             }
         }
         return values.isEmpty ? nil : (values.count - 1)
+    }
+
+    private var groupedBarPoints: [GroupedBarPoint] {
+        guard let categories = chart.x, let series = chart.series else {
+            return []
+        }
+
+        var points: [GroupedBarPoint] = []
+        points.reserveCapacity(categories.count * series.count)
+
+        for (seriesIndex, item) in series.enumerated() {
+            let valueCount = min(categories.count, item.values.count)
+            for idx in 0..<valueCount {
+                let category = categories[idx]
+                points.append(
+                    GroupedBarPoint(
+                        id: "\(item.id)-\(idx)-\(category)",
+                        category: category,
+                        amount: item.values[idx],
+                        periodName: item.name,
+                        seriesIndex: seriesIndex
+                    )
+                )
+            }
+        }
+
+        return points
     }
 }
 
