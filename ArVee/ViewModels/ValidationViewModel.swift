@@ -65,7 +65,7 @@ final class ValidationViewModel: ObservableObject {
         } catch {
             // Fallback for environments where streamed validation is unavailable.
             do {
-                validationStage = "Retrying validation..."
+                validationStage = "Taking the scenic route through your documents..."
                 let response = try await api.validate(
                     sessionId: sessionId,
                     transactionFiles: transactionFiles,

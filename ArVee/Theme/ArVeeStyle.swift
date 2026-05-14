@@ -301,11 +301,18 @@ struct StepIndicator: View {
 struct ArveeFileRow: View {
     let filename: String
     let subtitle: String?
+    let onTap: (() -> Void)?
     let onRemove: () -> Void
 
-    init(filename: String, subtitle: String? = nil, onRemove: @escaping () -> Void) {
+    init(
+        filename: String,
+        subtitle: String? = nil,
+        onTap: (() -> Void)? = nil,
+        onRemove: @escaping () -> Void
+    ) {
         self.filename = filename
         self.subtitle = subtitle
+        self.onTap = onTap
         self.onRemove = onRemove
     }
 
@@ -330,6 +337,11 @@ struct ArveeFileRow: View {
                 }
             }
             Spacer()
+            if onTap != nil {
+                Image(systemName: "arrow.up.forward.square")
+                    .font(.body)
+                    .foregroundColor(.arveeTeal)
+            }
             Button(action: onRemove) {
                 Image(systemName: "xmark.circle.fill")
                     .font(.body)
@@ -340,6 +352,10 @@ struct ArveeFileRow: View {
         .padding(.vertical, 8)
         .background(Color.arveeSand.opacity(0.25))
         .cornerRadius(10)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            onTap?()
+        }
     }
 
     private var fileIcon: String {
