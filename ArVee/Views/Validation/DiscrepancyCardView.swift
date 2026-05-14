@@ -112,7 +112,7 @@ struct DiscrepancyCardView: View {
                 .font(.system(size: 9, weight: .semibold, design: .rounded))
                 .foregroundColor(.arveeInkMuted)
             Text(value.isEmpty ? "—" : value)
-                .font(.system(.caption, design: .rounded))
+                .font(.system(size: 13.2, weight: .regular, design: .rounded))
                 .foregroundColor(.arveeInk)
                 .lineLimit(1)
         }

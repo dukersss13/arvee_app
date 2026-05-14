@@ -36,7 +36,7 @@ struct RecommendationCardView: View {
                         .font(.system(size: 10))
                         .foregroundColor(.arveeTeal)
                     Text(reason)
-                        .font(.system(size: 13.8, weight: .medium, design: .rounded))
+                        .font(.system(size: 13.1, weight: .medium, design: .rounded))
                         .foregroundColor(.arveeInkMuted)
                 }
             }
@@ -69,7 +69,7 @@ struct RecommendationCardView: View {
                 .font(.system(size: 9, weight: .semibold, design: .rounded))
                 .foregroundColor(.arveeInkMuted)
             Text(value.isEmpty ? "—" : value)
-                .font(.system(.caption, design: .rounded))
+                .font(.system(size: 13.2, weight: .regular, design: .rounded))
                 .foregroundColor(.arveeInk)
                 .lineLimit(1)
         }

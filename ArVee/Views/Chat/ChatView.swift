@@ -6,6 +6,7 @@ struct ChatView: View {
     @FocusState private var inputFocused: Bool
     @State private var welcomeScale: CGFloat = 0.6
     @State private var showingQuickSuggestions = false
+    @State private var bufferingPulse = false
 
     private let suggestions = [
         "How much did I spend on food?",
@@ -185,10 +186,20 @@ struct ChatView: View {
                     Text(viewModel.processingStage ?? "Working on your request...")
                         .font(.system(.caption, design: .rounded).weight(.medium))
                         .foregroundColor(.arveeInkMuted)
+                        .opacity(bufferingPulse ? 1.0 : 0.45)
                     Spacer()
                 }
                 .padding(.horizontal, 12)
                 .padding(.top, 4)
+                .onAppear {
+                    bufferingPulse = false
+                    withAnimation(.easeInOut(duration: 1.25).repeatForever(autoreverses: true)) {
+                        bufferingPulse = true
+                    }
+                }
+                .onDisappear {
+                    bufferingPulse = false
+                }
             }
 
             Divider().overlay(Color.arveeLine)
