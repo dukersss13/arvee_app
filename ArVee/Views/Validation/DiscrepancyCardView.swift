@@ -115,6 +115,7 @@ struct DiscrepancyCardView: View {
         }
         .padding(14)
         .arveePremiumGlassCard(accent: .arveeCoral, cornerRadius: 12)
+        .arveeKeyboardDismissToolbar()
         .onAppear {
             adjustedAmount = row.value(for: "Transaction Total")
         }
