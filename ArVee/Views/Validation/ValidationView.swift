@@ -3,7 +3,10 @@ import SwiftUI
 struct ValidationView: View {
     @ObservedObject var sessionVM: SessionViewModel
     @ObservedObject var viewModel: ValidationViewModel
+    @Binding var scrollTarget: ResultsSection?
     @State private var isExporting = false
+    @State private var showManualMatch = false
+    @State private var expandedSections: Set<ResultsSection> = Set(ResultsSection.allCases)
 
     var body: some View {
         NavigationStack {
@@ -17,7 +20,7 @@ struct ValidationView: View {
                 }
             }
             .arveePageBackground()
-            .navigationTitle("Validation")
+            .navigationTitle("Results")
             .navigationBarTitleDisplayMode(.large)
             .toolbarBackground(Color.arveePaper, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
@@ -41,6 +44,9 @@ struct ValidationView: View {
                         }
                     }
                 }
+            }
+            .sheet(isPresented: $showManualMatch) {
+                ManualMatchView(viewModel: viewModel)
             }
         }
     }
@@ -108,42 +114,101 @@ struct ValidationView: View {
     // MARK: - Results
 
     private var resultsView: some View {
-        VStack(spacing: 0) {
-            // Summary banner
-            if let summary = viewModel.summary {
-                HStack(spacing: 8) {
-                    Image(systemName: "text.quote")
-                        .font(.caption)
-                        .foregroundColor(.arveeTeal)
-                    Text(summary)
-                        .font(.system(.caption, design: .rounded))
-                        .foregroundColor(.arveeInk)
-                        .lineLimit(2)
-                }
-                .padding(12)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(
-                    LinearGradient(
-                        colors: [Color.arveeMint.opacity(0.3), Color.arveeMint.opacity(0.1)],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                )
-            }
-
+        ScrollViewReader { proxy in
             ScrollView {
-                LazyVStack(spacing: 12) {
-                    // KPI cards
+                LazyVStack(spacing: 16) {
+                    // KPI summary row
                     kpiRow
                         .padding(.top, 10)
 
-                    // Pill tab picker
-                    pillTabPicker
-                        .padding(.horizontal, 16)
+                    // Validated section
+                    collapsibleSection(
+                        section: .validated,
+                        title: "Validated",
+                        count: viewModel.validatedRows.count,
+                        accentColor: .arveeTeal,
+                        icon: "checkmark.circle.fill"
+                    ) {
+                        ForEach(viewModel.validatedRows) { row in
+                            ResultCardView(row: row)
+                        }
+                    }
 
-                    // Result table
-                    resultTable
-                        .padding(.bottom, 12)
+                    // Discrepancies section
+                    collapsibleSection(
+                        section: .discrepancies,
+                        title: "Discrepancies",
+                        count: viewModel.discrepancies.count,
+                        accentColor: .arveeCoral,
+                        icon: "exclamationmark.triangle.fill"
+                    ) {
+                        ForEach(Array(viewModel.discrepancies.enumerated()), id: \.element.id) { idx, row in
+                            DiscrepancyCardView(row: row) { adjustedAmount, comment in
+                                viewModel.acceptDiscrepancy(at: idx, adjustedAmount: adjustedAmount, comment: comment)
+                            }
+                        }
+                    }
+
+                    // Unmatched Transactions section
+                    collapsibleSection(
+                        section: .unmatchedTx,
+                        title: "Unmatched Transactions",
+                        count: viewModel.unmatchedTransactions.count,
+                        accentColor: .arveeInkMuted,
+                        icon: "doc.questionmark",
+                        action: viewModel.unmatchedTransactions.isEmpty ? nil : ("Manual Match", {
+                            showManualMatch = true
+                        })
+                    ) {
+                        ForEach(viewModel.unmatchedTransactions) { row in
+                            ResultCardView(row: row)
+                        }
+                    }
+
+                    // Unmatched Proofs section
+                    collapsibleSection(
+                        section: .unmatchedProofs,
+                        title: "Unmatched Proofs",
+                        count: viewModel.unmatchedProofs.count,
+                        accentColor: .arveeInkMuted,
+                        icon: "photo.on.rectangle",
+                        action: viewModel.unmatchedProofs.isEmpty ? nil : ("Manual Match", {
+                            showManualMatch = true
+                        })
+                    ) {
+                        ForEach(viewModel.unmatchedProofs) { row in
+                            ResultCardView(row: row)
+                        }
+                    }
+
+                    // Recommendations section
+                    collapsibleSection(
+                        section: .recommendations,
+                        title: "Recommendations",
+                        count: viewModel.recommendations.count,
+                        accentColor: .arveeTeal,
+                        icon: "sparkles",
+                        action: viewModel.recommendations.isEmpty ? nil : ("Accept All", {
+                            viewModel.acceptAllRecommendations()
+                        })
+                    ) {
+                        ForEach(Array(viewModel.recommendations.enumerated()), id: \.element.id) { idx, row in
+                            RecommendationCardView(row: row) {
+                                viewModel.acceptRecommendation(at: idx)
+                            }
+                        }
+                    }
+
+                    Spacer(minLength: 32)
+                }
+            }
+            .onChange(of: scrollTarget) { _, target in
+                if let target {
+                    expandedSections.insert(target)
+                    withAnimation {
+                        proxy.scrollTo(target.rawValue, anchor: .top)
+                    }
+                    scrollTarget = nil
                 }
             }
         }
@@ -153,30 +218,10 @@ struct ValidationView: View {
 
     private var kpiRow: some View {
         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 2), spacing: 10) {
-            gradientKpiCard(
-                label: "Validated",
-                value: viewModel.validatedRows.count,
-                accentColor: .arveeTeal,
-                icon: "checkmark.circle.fill"
-            )
-            gradientKpiCard(
-                label: "Discrepancies",
-                value: viewModel.discrepancies.count,
-                accentColor: .arveeCoral,
-                icon: "exclamationmark.triangle.fill"
-            )
-            gradientKpiCard(
-                label: "Unmatched Tx",
-                value: viewModel.unmatchedTransactions.count,
-                accentColor: .arveeInkMuted,
-                icon: "doc.questionmark"
-            )
-            gradientKpiCard(
-                label: "Unmatched Proofs",
-                value: viewModel.unmatchedProofs.count,
-                accentColor: .arveeInkMuted,
-                icon: "photo.on.rectangle"
-            )
+            gradientKpiCard(label: "Validated", value: viewModel.validatedRows.count, accentColor: .arveeTeal, icon: "checkmark.circle.fill")
+            gradientKpiCard(label: "Discrepancies", value: viewModel.discrepancies.count, accentColor: .arveeCoral, icon: "exclamationmark.triangle.fill")
+            gradientKpiCard(label: "Unmatched Tx", value: viewModel.unmatchedTransactions.count, accentColor: .arveeInkMuted, icon: "doc.questionmark")
+            gradientKpiCard(label: "Unmatched Proofs", value: viewModel.unmatchedProofs.count, accentColor: .arveeInkMuted, icon: "photo.on.rectangle")
         }
         .padding(.horizontal, 16)
     }
@@ -203,96 +248,83 @@ struct ValidationView: View {
         .arveeGradientCard(accent: accentColor, cornerRadius: 14)
     }
 
-    // MARK: - Pill Tab Picker
-
-    private var pillTabPicker: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                ForEach(ValidationViewModel.ResultTab.allCases, id: \.self) { tab in
-                    let count = tabCount(for: tab)
-                    Button {
-                        withAnimation(.easeInOut(duration: 0.2)) {
-                            viewModel.selectedTab = tab
-                        }
-                    } label: {
-                        HStack(spacing: 5) {
-                            Text(tab.rawValue)
-                                .font(.system(.subheadline, design: .rounded).weight(.medium))
-                            if count > 0 {
-                                Text("\(count)")
-                                    .font(.system(size: 11, weight: .bold, design: .rounded))
-                                    .foregroundColor(viewModel.selectedTab == tab ? .arveeTeal : .arveeInkMuted)
-                                    .padding(.horizontal, 6)
-                                    .padding(.vertical, 2)
-                                    .background(
-                                        viewModel.selectedTab == tab
-                                            ? Color.arveeTealSoft
-                                            : Color.arveeInkMuted.opacity(0.1)
-                                    )
-                                    .cornerRadius(8)
-                            }
-                        }
-                        .foregroundColor(viewModel.selectedTab == tab ? .arveeTeal : .arveeInkMuted)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 8)
-                        .background(
-                            viewModel.selectedTab == tab
-                                ? Color.arveeTealSoft
-                                : Color.clear
-                        )
-                        .cornerRadius(20)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 20)
-                                .stroke(
-                                    viewModel.selectedTab == tab
-                                        ? Color.arveeTeal.opacity(0.3)
-                                        : Color.arveeLine,
-                                    lineWidth: 0.5
-                                )
-                        )
-                    }
-                }
-            }
-        }
-    }
-
-    private func tabCount(for tab: ValidationViewModel.ResultTab) -> Int {
-        switch tab {
-        case .validated: return viewModel.validatedRows.count
-        case .discrepancies: return viewModel.discrepancies.count
-        case .unmatchedTx: return viewModel.unmatchedTransactions.count
-        case .unmatchedProofs: return viewModel.unmatchedProofs.count
-        }
-    }
-
-    // MARK: - Result Table
+    // MARK: - Collapsible Section
 
     @ViewBuilder
-    private var resultTable: some View {
-        let rows: [ResultRow] = {
-            switch viewModel.selectedTab {
-            case .validated: return viewModel.validatedRows
-            case .discrepancies: return viewModel.discrepancies
-            case .unmatchedTx: return viewModel.unmatchedTransactions
-            case .unmatchedProofs: return viewModel.unmatchedProofs
-            }
-        }()
+    private func collapsibleSection<Content: View>(
+        section: ResultsSection,
+        title: String,
+        count: Int,
+        accentColor: Color,
+        icon: String,
+        action: (String, () -> Void)? = nil,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            // Header
+            Button {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    if expandedSections.contains(section) {
+                        expandedSections.remove(section)
+                    } else {
+                        expandedSections.insert(section)
+                    }
+                }
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: icon)
+                        .font(.caption)
+                        .foregroundColor(accentColor)
+                    Text(title)
+                        .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                        .foregroundColor(.arveeInk)
+                    Text("\(count)")
+                        .font(.system(size: 11, weight: .bold, design: .rounded))
+                        .foregroundColor(accentColor)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(accentColor.opacity(0.1))
+                        .cornerRadius(6)
+                    Spacer()
 
-        if rows.isEmpty {
-            VStack(spacing: 8) {
-                Image(systemName: "tray")
-                    .font(.title2)
-                    .foregroundColor(.arveeInkMuted)
-                Text("No items")
-                    .font(.system(.subheadline, design: .rounded))
-                    .foregroundColor(.arveeInkMuted)
+                    if let action {
+                        Button(action.1) {
+                            Text(action.0)
+                                .font(.system(.caption, design: .rounded).weight(.semibold))
+                                .foregroundColor(.arveeTeal)
+                        }
+                    }
+
+                    Image(systemName: expandedSections.contains(section) ? "chevron.up" : "chevron.down")
+                        .font(.caption.weight(.semibold))
+                        .foregroundColor(.arveeInkMuted)
+                }
             }
-            .padding(.vertical, 28)
-            .frame(maxWidth: .infinity)
-            .arveeCard(cornerRadius: 14)
+            .id(section.rawValue)
             .padding(.horizontal, 16)
-        } else {
-            ResultTableView(rows: rows)
+
+            // Content
+            if expandedSections.contains(section) {
+                if count == 0 {
+                    HStack {
+                        Image(systemName: "tray")
+                            .font(.caption)
+                            .foregroundColor(.arveeInkMuted)
+                        Text("No items")
+                            .font(.system(.caption, design: .rounded))
+                            .foregroundColor(.arveeInkMuted)
+                    }
+                    .padding(12)
+                    .frame(maxWidth: .infinity)
+                    .arveeCard(cornerRadius: 10)
+                    .padding(.horizontal, 16)
+                } else {
+                    LazyVStack(spacing: 8) {
+                        content()
+                    }
+                    .padding(.horizontal, 16)
+                }
+            }
         }
     }
 
@@ -307,7 +339,6 @@ struct ValidationView: View {
                     row.fields as [String: Any]
                 }
                 let pdfData = try await APIService.shared.exportPDF(rows: rowDicts)
-                // Share the PDF via share sheet
                 let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("validated_transactions.pdf")
                 try pdfData.write(to: tempURL)
                 await MainActor.run {
@@ -321,6 +352,127 @@ struct ValidationView: View {
                 viewModel.errorMessage = "Export failed: \(error.localizedDescription)"
             }
             isExporting = false
+        }
+    }
+}
+
+/// Compact card for displaying a single result row (validated, unmatched, etc.)
+struct ResultCardView: View {
+    let row: ResultRow
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            // Check for matched pair format (Transaction/Proof columns)
+            let hasTxBiz = !row.value(for: "Transaction Business Name").isEmpty
+            let hasProofBiz = !row.value(for: "Proof Business Name").isEmpty
+
+            if hasTxBiz || hasProofBiz {
+                matchedPairLayout
+            } else {
+                singleRowLayout
+            }
+        }
+        .padding(12)
+        .arveeCard(cornerRadius: 12)
+    }
+
+    // Layout for matched pairs (Transaction ↔ Proof)
+    private var matchedPairLayout: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            // Transaction
+            HStack {
+                Text("TX")
+                    .font(.system(size: 9, weight: .bold, design: .rounded))
+                    .foregroundColor(.arveeTeal)
+                    .tracking(0.5)
+                Text(row.value(for: "Transaction Business Name"))
+                    .font(.system(.caption, design: .rounded).weight(.medium))
+                    .foregroundColor(.arveeInk)
+                    .lineLimit(1)
+                Spacer()
+                Text(row.value(for: "Transaction Date"))
+                    .font(.caption2)
+                    .foregroundColor(.arveeInkMuted)
+                Text(row.value(for: "Transaction Total"))
+                    .font(.system(.caption, design: .rounded).weight(.bold).monospacedDigit())
+                    .foregroundColor(.arveeInk)
+            }
+
+            // Proof
+            HStack {
+                Text("PR")
+                    .font(.system(size: 9, weight: .bold, design: .rounded))
+                    .foregroundColor(.arveeCoral)
+                    .tracking(0.5)
+                Text(row.value(for: "Proof Business Name"))
+                    .font(.system(.caption, design: .rounded).weight(.medium))
+                    .foregroundColor(.arveeInk)
+                    .lineLimit(1)
+                Spacer()
+                Text(row.value(for: "Proof Date"))
+                    .font(.caption2)
+                    .foregroundColor(.arveeInkMuted)
+                Text(row.value(for: "Proof Total"))
+                    .font(.system(.caption, design: .rounded).weight(.bold).monospacedDigit())
+                    .foregroundColor(.arveeInk)
+            }
+
+            // Status / Reason
+            let status = row.value(for: "Result").isEmpty ? row.value(for: "Reason") : row.value(for: "Result")
+            if !status.isEmpty {
+                Text(status)
+                    .font(.system(size: 10, design: .rounded))
+                    .foregroundColor(.arveeInkMuted)
+                    .lineLimit(1)
+            }
+        }
+    }
+
+    // Layout for single items (unmatched tx or proof)
+    private var singleRowLayout: some View {
+        HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: 3) {
+                let name = row.value(for: "Business Name").isEmpty
+                    ? row.value(for: "business_name")
+                    : row.value(for: "Business Name")
+                if !name.isEmpty {
+                    Text(name)
+                        .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                        .foregroundColor(.arveeInk)
+                        .lineLimit(1)
+                }
+                HStack(spacing: 8) {
+                    let date = row.value(for: "Date").isEmpty
+                        ? row.value(for: "date")
+                        : row.value(for: "Date")
+                    if !date.isEmpty {
+                        Text(date)
+                            .font(.caption)
+                            .foregroundColor(.arveeInkMuted)
+                    }
+                    let category = row.value(for: "Category").isEmpty
+                        ? row.value(for: "category")
+                        : row.value(for: "Category")
+                    if !category.isEmpty {
+                        Text(category)
+                            .font(.system(size: 10, weight: .medium, design: .rounded))
+                            .foregroundColor(.arveeTeal)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Color.arveeTealSoft)
+                            .cornerRadius(4)
+                    }
+                }
+            }
+            Spacer()
+            let total = row.value(for: "Total").isEmpty
+                ? row.value(for: "total")
+                : row.value(for: "Total")
+            if !total.isEmpty {
+                Text("$\(total)")
+                    .font(.system(.subheadline, design: .rounded).weight(.bold).monospacedDigit())
+                    .foregroundColor(.arveeInk)
+            }
         }
     }
 }

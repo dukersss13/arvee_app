@@ -16,67 +16,32 @@ struct ChatView: View {
     var body: some View {
         NavigationStack {
             Group {
-                if !sessionVM.hasSession {
-                    noSessionPlaceholder
-                } else if viewModel.messages.isEmpty {
+                if viewModel.messages.isEmpty {
                     welcomeView
                 } else {
                     chatContent
                 }
             }
             .arveePageBackground()
-            .navigationTitle("ArVee Chat")
+            .navigationTitle("ArVee")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(Color.arveePaper, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbar {
-                if sessionVM.hasSession {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button {
-                            viewModel.clear()
-                        } label: {
-                            Image(systemName: "trash")
-                                .foregroundColor(.arveeInkMuted)
-                        }
-                        .disabled(viewModel.messages.isEmpty)
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        viewModel.clear()
+                    } label: {
+                        Image(systemName: "trash")
+                            .foregroundColor(.arveeInkMuted)
                     }
+                    .disabled(viewModel.messages.isEmpty)
                 }
             }
-        }
-    }
-
-    // MARK: - No Session
-
-    private var noSessionPlaceholder: some View {
-        VStack(spacing: 0) {
-            VStack(spacing: 16) {
-                ZStack {
-                    Circle()
-                        .fill(Color.arveeTealSoft)
-                        .frame(width: 88, height: 88)
-                    Image(systemName: "bubble.left.and.text.bubble.right")
-                        .font(.system(size: 36))
-                        .foregroundStyle(Color.arveeTealGradient)
-                }
-                Text("Start a session to chat with ArVee")
-                    .font(.arveeHeadline())
-                    .foregroundColor(.arveeInk)
-                Text("Create a session to get started.")
-                    .font(.subheadline)
-                    .foregroundColor(.arveeInkMuted)
-                Button {
-                    Task { await sessionVM.ensureSession() }
-                } label: {
-                    Label("Create Session", systemImage: "plus.circle.fill")
-                }
-                .buttonStyle(ArveePrimaryButtonStyle())
+            .task {
+                await sessionVM.ensureSession()
             }
-            .padding(22)
-            .arveeCard(cornerRadius: 20)
-            .padding(.horizontal, 20)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .padding(.top, 28)
     }
 
     // MARK: - Welcome View (session active, no messages)

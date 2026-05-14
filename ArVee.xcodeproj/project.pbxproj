@@ -21,7 +21,6 @@
 		A10012 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10012; };
 		A10013 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10013; };
 		A10014 /* StatusBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10014; };
-		A10015 /* SessionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10015; };
 		A10016 /* ValidationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10016; };
 		A10017 /* ResultTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10017; };
 		A10018 /* ChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10018; };
@@ -33,6 +32,9 @@
 		A10024 /* ArVeeStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10024; };
 		A10025 /* UploadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10025; };
 		A10026 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10026; };
+		A10027 /* DiscrepancyCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10027; };
+		A10028 /* RecommendationCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10028; };
+		A10029 /* ManualMatchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10029; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -50,7 +52,6 @@
 		B10012 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
 		B10013 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		B10014 /* StatusBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBanner.swift; sourceTree = "<group>"; };
-		B10015 /* SessionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionView.swift; sourceTree = "<group>"; };
 		B10016 /* ValidationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ValidationView.swift; sourceTree = "<group>"; };
 		B10017 /* ResultTableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultTableView.swift; sourceTree = "<group>"; };
 		B10018 /* ChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatView.swift; sourceTree = "<group>"; };
@@ -62,6 +63,9 @@
 		B10024 /* ArVeeStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArVeeStyle.swift; sourceTree = "<group>"; };
 		B10025 /* UploadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadView.swift; sourceTree = "<group>"; };
 		B10026 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		B10027 /* DiscrepancyCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiscrepancyCardView.swift; sourceTree = "<group>"; };
+		B10028 /* RecommendationCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecommendationCardView.swift; sourceTree = "<group>"; };
+		B10029 /* ManualMatchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManualMatchView.swift; sourceTree = "<group>"; };
 		C10001 /* ArVee.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ArVee.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -136,7 +140,6 @@
 				B10013 /* SettingsView.swift */,
 				E10007 /* Components */,
 				E10013 /* Home */,
-				E10008 /* Session */,
 				E10012 /* Upload */,
 				E10009 /* Validation */,
 				E10010 /* Chat */,
@@ -168,19 +171,15 @@
 			path = Components;
 			sourceTree = "<group>";
 		};
-		E10008 /* Session */ = {
-			isa = PBXGroup;
-			children = (
-				B10015 /* SessionView.swift */,
-			);
-			path = Session;
-			sourceTree = "<group>";
-		};
+
 		E10009 /* Validation */ = {
 			isa = PBXGroup;
 			children = (
 				B10016 /* ValidationView.swift */,
 				B10017 /* ResultTableView.swift */,
+				B10027 /* DiscrepancyCardView.swift */,
+				B10028 /* RecommendationCardView.swift */,
+				B10029 /* ManualMatchView.swift */,
 			);
 			path = Validation;
 			sourceTree = "<group>";
@@ -296,7 +295,6 @@
 				A10012 /* MainTabView.swift in Sources */,
 				A10013 /* SettingsView.swift in Sources */,
 				A10014 /* StatusBanner.swift in Sources */,
-				A10015 /* SessionView.swift in Sources */,
 				A10016 /* ValidationView.swift in Sources */,
 				A10017 /* ResultTableView.swift in Sources */,
 				A10018 /* ChatView.swift in Sources */,
@@ -307,6 +305,9 @@
 				A10024 /* ArVeeStyle.swift in Sources */,
 				A10025 /* UploadView.swift in Sources */,
 				A10026 /* HomeView.swift in Sources */,
+				A10027 /* DiscrepancyCardView.swift in Sources */,
+				A10028 /* RecommendationCardView.swift in Sources */,
+				A10029 /* ManualMatchView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

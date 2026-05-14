@@ -13,7 +13,6 @@ final class ValidationViewModel: ObservableObject {
     @Published var unmatchedTransactions: [ResultRow] = []
     @Published var unmatchedProofs: [ResultRow] = []
     @Published var recommendations: [ResultRow] = []
-    @Published var selectedTab: ResultTab = .validated
 
     // Photo selection
     @Published var transactionPhotos: [PhotosPickerItem] = []
@@ -29,7 +28,7 @@ final class ValidationViewModel: ObservableObject {
 
     private let api = APIService.shared
 
-    var hasResults: Bool { !validatedRows.isEmpty || !discrepancies.isEmpty }
+    var hasResults: Bool { !validatedRows.isEmpty || !discrepancies.isEmpty || !unmatchedTransactions.isEmpty || !unmatchedProofs.isEmpty || !recommendations.isEmpty }
 
     var hasTransactionFiles: Bool {
         !transactionPhotos.isEmpty || !transactionDocumentURLs.isEmpty
@@ -45,13 +44,6 @@ final class ValidationViewModel: ObservableObject {
 
     var totalProofCount: Int {
         proofPhotos.count + proofDocumentURLs.count
-    }
-
-    enum ResultTab: String, CaseIterable {
-        case validated = "Validated"
-        case discrepancies = "Discrepancies"
-        case unmatchedTx = "Unmatched Tx"
-        case unmatchedProofs = "Unmatched Proofs"
     }
 
     func validate(sessionId: String) async {
@@ -133,6 +125,79 @@ final class ValidationViewModel: ObservableObject {
     func removeProofDocument(at index: Int) {
         guard index < proofDocumentURLs.count else { return }
         proofDocumentURLs.remove(at: index)
+    }
+
+    // MARK: - Interactive Actions
+
+    /// Accept a discrepancy with optional adjusted amount and comment, moving it to validated.
+    func acceptDiscrepancy(at index: Int, adjustedAmount: Double?, comment: String?) {
+        guard index < discrepancies.count else { return }
+        var row = discrepancies.remove(at: index)
+        var fields = row.fields
+        fields["Result"] = "Validated (Manual)"
+        if let adj = adjustedAmount {
+            fields["Adjusted Amount"] = String(format: "%.2f", adj)
+        }
+        if let c = comment, !c.isEmpty {
+            fields["Comment"] = c
+        }
+        row = ResultRow(fields: fields)
+        validatedRows.append(row)
+    }
+
+    /// Accept a recommendation, moving it to validated and removing matched items from unmatched lists.
+    func acceptRecommendation(at index: Int) {
+        guard index < recommendations.count else { return }
+        let rec = recommendations.remove(at: index)
+        var fields = rec.fields
+        fields["Result"] = "Validated (Recommended)"
+
+        // Remove matching items from unmatched lists by business name
+        let txName = rec.value(for: "Transaction Business Name")
+        let proofName = rec.value(for: "Proof Business Name")
+        if !txName.isEmpty {
+            unmatchedTransactions.removeAll { $0.value(for: "Business Name") == txName || $0.value(for: "business_name") == txName }
+        }
+        if !proofName.isEmpty {
+            unmatchedProofs.removeAll { $0.value(for: "Business Name") == proofName || $0.value(for: "business_name") == proofName }
+        }
+
+        validatedRows.append(ResultRow(fields: fields))
+    }
+
+    /// Accept all recommendations at once.
+    func acceptAllRecommendations() {
+        while !recommendations.isEmpty {
+            acceptRecommendation(at: 0)
+        }
+    }
+
+    /// Manually match an unmatched transaction with an unmatched proof.
+    func manualMatch(transactionIndex: Int, proofIndex: Int) {
+        guard transactionIndex < unmatchedTransactions.count,
+              proofIndex < unmatchedProofs.count else { return }
+        let tx = unmatchedTransactions.remove(at: transactionIndex)
+        let proof = unmatchedProofs.remove(at: proofIndex)
+
+        // Build a validated row combining fields from both
+        var fields: [String: String] = [:]
+        let txBiz = tx.value(for: "Business Name").isEmpty ? tx.value(for: "business_name") : tx.value(for: "Business Name")
+        let txTotal = tx.value(for: "Total").isEmpty ? tx.value(for: "total") : tx.value(for: "Total")
+        let txDate = tx.value(for: "Date").isEmpty ? tx.value(for: "date") : tx.value(for: "Date")
+        let proofBiz = proof.value(for: "Business Name").isEmpty ? proof.value(for: "business_name") : proof.value(for: "Business Name")
+        let proofTotal = proof.value(for: "Total").isEmpty ? proof.value(for: "total") : proof.value(for: "Total")
+        let proofDate = proof.value(for: "Date").isEmpty ? proof.value(for: "date") : proof.value(for: "Date")
+
+        fields["Transaction Business Name"] = txBiz
+        fields["Transaction Total"] = txTotal
+        fields["Transaction Date"] = txDate
+        fields["Proof Business Name"] = proofBiz
+        fields["Proof Total"] = proofTotal
+        fields["Proof Date"] = proofDate
+        fields["Result"] = "Manually Matched"
+        fields["Reason"] = "Matched manually by user"
+
+        validatedRows.append(ResultRow(fields: fields))
     }
 
     func clear() {

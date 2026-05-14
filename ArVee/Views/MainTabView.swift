@@ -5,13 +5,15 @@ struct MainTabView: View {
     @StateObject private var validationVM = ValidationViewModel()
     @StateObject private var chatVM = ChatViewModel()
     @State private var selectedTab = 0
+    @State private var resultsScrollTarget: ResultsSection?
 
     var body: some View {
         TabView(selection: $selectedTab) {
             HomeView(
                 sessionVM: sessionVM,
                 validationVM: validationVM,
-                selectedTab: $selectedTab
+                selectedTab: $selectedTab,
+                resultsScrollTarget: $resultsScrollTarget
             )
             .tabItem {
                 Label("Home", systemImage: "house.fill")
@@ -30,10 +32,11 @@ struct MainTabView: View {
 
             ValidationView(
                 sessionVM: sessionVM,
-                viewModel: validationVM
+                viewModel: validationVM,
+                scrollTarget: $resultsScrollTarget
             )
             .tabItem {
-                Label("Validation", systemImage: "checkmark.shield")
+                Label("Results", systemImage: "checkmark.shield")
             }
             .tag(2)
 
@@ -56,4 +59,10 @@ struct MainTabView: View {
         .toolbarBackground(Color.arveePaper, for: .tabBar)
         .toolbarBackground(.visible, for: .tabBar)
     }
+}
+
+/// Identifiable section target for scrolling within the Results tab.
+enum ResultsSection: String, Identifiable, CaseIterable {
+    case validated, discrepancies, unmatchedTx, unmatchedProofs, recommendations
+    var id: String { rawValue }
 }

@@ -4,6 +4,7 @@ struct HomeView: View {
     @ObservedObject var sessionVM: SessionViewModel
     @ObservedObject var validationVM: ValidationViewModel
     @Binding var selectedTab: Int
+    @Binding var resultsScrollTarget: ResultsSection?
 
     var body: some View {
         NavigationStack {
@@ -77,29 +78,44 @@ struct HomeView: View {
     private var statsRow: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 12) {
-                ArveeMetricCard(
-                    title: "Validated",
-                    value: "\(validationVM.validatedRows.count)",
-                    icon: "checkmark.circle.fill",
-                    accentColor: .arveeTeal
-                )
-                .frame(width: 160)
+                Button {
+                    resultsScrollTarget = .validated
+                    withAnimation(.spring(response: 0.3)) { selectedTab = 2 }
+                } label: {
+                    ArveeMetricCard(
+                        title: "Validated",
+                        value: "\(validationVM.validatedRows.count)",
+                        icon: "checkmark.circle.fill",
+                        accentColor: .arveeTeal
+                    )
+                    .frame(width: 160)
+                }
 
-                ArveeMetricCard(
-                    title: "Discrepancies",
-                    value: "\(validationVM.discrepancies.count)",
-                    icon: "exclamationmark.triangle.fill",
-                    accentColor: .arveeCoral
-                )
-                .frame(width: 160)
+                Button {
+                    resultsScrollTarget = .discrepancies
+                    withAnimation(.spring(response: 0.3)) { selectedTab = 2 }
+                } label: {
+                    ArveeMetricCard(
+                        title: "Discrepancies",
+                        value: "\(validationVM.discrepancies.count)",
+                        icon: "exclamationmark.triangle.fill",
+                        accentColor: .arveeCoral
+                    )
+                    .frame(width: 160)
+                }
 
-                ArveeMetricCard(
-                    title: "Unmatched",
-                    value: "\(validationVM.unmatchedTransactions.count + validationVM.unmatchedProofs.count)",
-                    icon: "questionmark.circle",
-                    accentColor: .arveeInkMuted
-                )
-                .frame(width: 160)
+                Button {
+                    resultsScrollTarget = .unmatchedTx
+                    withAnimation(.spring(response: 0.3)) { selectedTab = 2 }
+                } label: {
+                    ArveeMetricCard(
+                        title: "Unmatched",
+                        value: "\(validationVM.unmatchedTransactions.count + validationVM.unmatchedProofs.count)",
+                        icon: "questionmark.circle",
+                        accentColor: .arveeInkMuted
+                    )
+                    .frame(width: 160)
+                }
             }
             .padding(.horizontal, 16)
         }
