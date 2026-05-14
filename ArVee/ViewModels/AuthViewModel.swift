@@ -56,7 +56,8 @@ final class AuthViewModel: ObservableObject {
             errorMessage = "Password must be at least 8 characters."
             return
         }
-        if mode == .signup && pwd != confirmPassword {
+        let confirmPwd = confirmPassword.trimmingCharacters(in: .whitespacesAndNewlines)
+        if mode == .signup && pwd != confirmPwd {
             errorMessage = "Passwords do not match."
             return
         }
@@ -271,7 +272,7 @@ private enum GoogleAuthError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .notConfigured:
-            return "Google login is not configured yet. Please contact your administrator."
+            return "Google sign-in isn't available for this server yet."
         case .invalidAuthorizationURL:
             return "Could not start Google login."
         case .invalidTokenURL:
