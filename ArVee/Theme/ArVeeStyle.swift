@@ -336,12 +336,13 @@ struct ArveeFileRow: View {
                         .foregroundColor(.arveeInkMuted)
                 }
             }
-            Spacer()
             if onTap != nil {
                 Image(systemName: "arrow.up.forward.square")
                     .font(.body)
                     .foregroundColor(.arveeTeal)
+                    .padding(.leading, 6)
             }
+            Spacer()
             Button(action: onRemove) {
                 Image(systemName: "xmark.circle.fill")
                     .font(.body)

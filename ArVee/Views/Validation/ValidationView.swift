@@ -152,6 +152,27 @@ struct ValidationView: View {
                         }
                     }
 
+                    if !viewModel.unmatchedTransactions.isEmpty || !viewModel.unmatchedProofs.isEmpty {
+                        HStack(spacing: 10) {
+                            Image(systemName: "link.badge.plus")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(.arveeTeal)
+                            Text("Need to pair unmatched transactions and proofs?")
+                                .font(.system(.caption, design: .rounded))
+                                .foregroundColor(.arveeInkMuted)
+                            Spacer()
+                            Button("Manual Match") {
+                                showManualMatch = true
+                            }
+                            .font(.system(.caption, design: .rounded).weight(.semibold))
+                            .foregroundColor(.arveeTeal)
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 10)
+                        .arveeCard(cornerRadius: 12)
+                        .padding(.horizontal, 16)
+                    }
+
                     if !viewModel.unmatchedTransactions.isEmpty {
                         // Unmatched Transactions section
                         collapsibleSection(

@@ -279,6 +279,20 @@ final class ValidationViewModel: ObservableObject {
         let tx = unmatchedTransactions.remove(at: transactionIndex)
         let proof = unmatchedProofs.remove(at: proofIndex)
 
+        let txBizForMatch = tx.value(for: "Business Name").isEmpty
+            ? tx.value(for: "business_name")
+            : tx.value(for: "Business Name")
+        let proofBizForMatch = proof.value(for: "Business Name").isEmpty
+            ? proof.value(for: "business_name")
+            : proof.value(for: "Business Name")
+
+        // If a recommendation references this manually matched pair,
+        // remove it so users do not see stale accept options.
+        recommendations.removeAll { rec in
+            rec.value(for: "Transaction Business Name") == txBizForMatch
+                && rec.value(for: "Proof Business Name") == proofBizForMatch
+        }
+
         // Build a validated row combining fields from both
         var fields: [String: String] = [:]
         let txBiz = tx.value(for: "Business Name").isEmpty ? tx.value(for: "business_name") : tx.value(for: "Business Name")
