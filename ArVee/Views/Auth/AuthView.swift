@@ -192,26 +192,62 @@ struct AuthView: View {
                 }
 
                 authField(icon: "lock.fill", placeholder: "Password") {
-                    SecureField("Password", text: $viewModel.password)
-                        .submitLabel(viewModel.mode == .signup ? .next : .done)
-                        .onSubmit {
-                            if viewModel.mode == .signup {
-                                focusedField = .confirmPassword
-                            } else {
-                                focusedField = nil
-                            }
+                    Group {
+                        if viewModel.showPassword {
+                            TextField("Password", text: $viewModel.password)
+                        } else {
+                            SecureField("Password", text: $viewModel.password)
                         }
-                        .focused($focusedField, equals: .password)
+                    }
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .submitLabel(viewModel.mode == .signup ? .next : .done)
+                    .onSubmit {
+                        if viewModel.mode == .signup {
+                            focusedField = .confirmPassword
+                        } else {
+                            focusedField = nil
+                        }
+                    }
+                    .focused($focusedField, equals: .password)
+                } trailing: {
+                    Button {
+                        viewModel.showPassword.toggle()
+                    } label: {
+                        Image(systemName: viewModel.showPassword ? "eye.slash.fill" : "eye.fill")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.arveeInkMuted)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(viewModel.showPassword ? "Hide Password" : "Show Password")
                 }
 
                 if viewModel.mode == .signup {
                     authField(icon: "lock.rotation", placeholder: "Confirm Password") {
-                        SecureField("Confirm Password", text: $viewModel.confirmPassword)
-                            .submitLabel(.done)
-                            .onSubmit {
-                                focusedField = nil
+                        Group {
+                            if viewModel.showConfirmPassword {
+                                TextField("Confirm Password", text: $viewModel.confirmPassword)
+                            } else {
+                                SecureField("Confirm Password", text: $viewModel.confirmPassword)
                             }
-                            .focused($focusedField, equals: .confirmPassword)
+                        }
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .submitLabel(.done)
+                        .onSubmit {
+                            focusedField = nil
+                        }
+                        .focused($focusedField, equals: .confirmPassword)
+                    } trailing: {
+                        Button {
+                            viewModel.showConfirmPassword.toggle()
+                        } label: {
+                            Image(systemName: viewModel.showConfirmPassword ? "eye.slash.fill" : "eye.fill")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(.arveeInkMuted)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(viewModel.showConfirmPassword ? "Hide Confirm Password" : "Show Confirm Password")
                     }
                     .transition(.move(edge: .top).combined(with: .opacity))
                 }
@@ -278,6 +314,17 @@ struct AuthView: View {
         placeholder: String,
         @ViewBuilder content: () -> Content
     ) -> some View {
+        authField(icon: icon, placeholder: placeholder, content: content) {
+            EmptyView()
+        }
+    }
+
+    private func authField<Content: View, Trailing: View>(
+        icon: String,
+        placeholder: String,
+        @ViewBuilder content: () -> Content,
+        @ViewBuilder trailing: () -> Trailing
+    ) -> some View {
         HStack(spacing: 12) {
             Image(systemName: icon)
                 .font(.system(size: 14, weight: .medium))
@@ -286,6 +333,8 @@ struct AuthView: View {
 
             content()
                 .font(.system(.body, design: .rounded))
+
+            trailing()
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)

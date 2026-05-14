@@ -9,9 +9,17 @@ final class AuthViewModel: ObservableObject {
     @Published var email = ""
     @Published var password = ""
     @Published var confirmPassword = ""
+    @Published var showPassword = false
+    @Published var showConfirmPassword = false
     @Published var isLoading = false
     @Published var errorMessage: String?
-    @Published var mode: AuthMode = .login
+    @Published var mode: AuthMode = .login {
+        didSet {
+            if mode != oldValue {
+                resetPasswordVisibility()
+            }
+        }
+    }
     @Published var isAuthenticated = APIService.shared.isAuthenticated
     @Published var authenticatedEmail = APIService.shared.authenticatedEmail
     @Published var isGoogleAvailable = false
@@ -132,6 +140,12 @@ final class AuthViewModel: ObservableObject {
         refreshAuthState()
         password = ""
         confirmPassword = ""
+        resetPasswordVisibility()
+    }
+
+    private func resetPasswordVisibility() {
+        showPassword = false
+        showConfirmPassword = false
     }
 
     func submitGoogle() async {
