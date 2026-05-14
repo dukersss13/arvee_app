@@ -24,5 +24,24 @@ struct AuthMeResponse: Codable {
 struct GoogleAuthConfigResponse: Codable {
     let enabled: Bool
     let clientId: String
+    let iosClientId: String?
     let redirectScheme: String
+
+    /// Returns the best client ID for an iOS native OAuth flow.
+    /// Prefers the dedicated iOS client ID when available.
+    var effectiveClientId: String {
+        if let ios = iosClientId, !ios.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return ios
+        }
+        return clientId
+    }
+
+    /// Redirect scheme derived from the iOS client ID (reversed client ID).
+    /// Falls back to the backend-provided ``redirectScheme``.
+    var effectiveRedirectScheme: String {
+        if let ios = iosClientId, !ios.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return ios.components(separatedBy: ".").reversed().joined(separator: ".")
+        }
+        return redirectScheme
+    }
 }

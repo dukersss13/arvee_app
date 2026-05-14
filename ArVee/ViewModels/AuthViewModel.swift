@@ -162,20 +162,22 @@ final class AuthViewModel: ObservableObject {
                     "Google sign-in is disabled on the backend. Set ARVEE_GOOGLE_OAUTH_CLIENT_ID and redeploy the GCP backend."
                 )
             }
-            guard !config.clientId.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            let effectiveId = config.effectiveClientId
+            guard !effectiveId.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
                 throw GoogleAuthError.notConfigured(
                     "Google sign-in backend config is incomplete. Add ARVEE_GOOGLE_OAUTH_CLIENT_ID and redeploy."
                 )
             }
-            guard !config.redirectScheme.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            let effectiveScheme = config.effectiveRedirectScheme
+            guard !effectiveScheme.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
                 throw GoogleAuthError.notConfigured(
                     "Google redirect scheme is missing on the backend. Set ARVEE_GOOGLE_REDIRECT_SCHEME."
                 )
             }
 
             let idToken = try await getGoogleIDToken(
-                clientId: config.clientId,
-                redirectScheme: config.redirectScheme
+                clientId: effectiveId,
+                redirectScheme: effectiveScheme
             )
             _ = try await withTimeout(seconds: 20) {
                 try await self.api.loginWithGoogle(idToken: idToken)
