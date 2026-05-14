@@ -6,6 +6,8 @@ import UniformTypeIdentifiers
 @MainActor
 final class ValidationViewModel: ObservableObject {
     @Published var isValidating = false
+    @Published var validationStage: String?
+    @Published var validationPercent: Int?
     @Published var errorMessage: String?
     @Published var summary: String?
     @Published var validatedRows: [ResultRow] = []
@@ -28,6 +30,7 @@ final class ValidationViewModel: ObservableObject {
 
     private let api = APIService.shared
     private var currentSessionId: String?
+    private var validationSSEClient: ValidationSSEClient?
 
     var hasResults: Bool { !validatedRows.isEmpty || !discrepancies.isEmpty || !unmatchedTransactions.isEmpty || !unmatchedProofs.isEmpty || !recommendations.isEmpty }
 
@@ -49,24 +52,100 @@ final class ValidationViewModel: ObservableObject {
 
     func validate(sessionId: String) async {
         isValidating = true
+        validationStage = "Starting validation..."
+        validationPercent = 0
         errorMessage = nil
         currentSessionId = sessionId
         do {
-            let response = try await api.validate(
+            try await runValidationStream(
                 sessionId: sessionId,
                 transactionFiles: transactionFiles,
                 proofFiles: proofFiles
             )
-            summary = response.summary
-            validatedRows = (response.validatedTransactions ?? []).map { ResultRow(from: $0) }
-            discrepancies = (response.discrepancies ?? []).map { ResultRow(from: $0) }
-            unmatchedTransactions = (response.unmatchedTransactions ?? []).map { ResultRow(from: $0) }
-            unmatchedProofs = (response.unmatchedProofs ?? []).map { ResultRow(from: $0) }
-            recommendations = (response.recommendations ?? []).map { ResultRow(from: $0) }
         } catch {
-            errorMessage = error.localizedDescription
+            // Fallback for environments where streamed validation is unavailable.
+            do {
+                validationStage = "Retrying validation..."
+                let response = try await api.validate(
+                    sessionId: sessionId,
+                    transactionFiles: transactionFiles,
+                    proofFiles: proofFiles
+                )
+                applyValidationResponse(response)
+                validationPercent = 100
+                validationStage = "Validation complete."
+            } catch {
+                errorMessage = error.localizedDescription
+            }
         }
         isValidating = false
+        validationStage = nil
+        validationPercent = nil
+    }
+
+    private func runValidationStream(
+        sessionId: String,
+        transactionFiles: [FilePayload],
+        proofFiles: [FilePayload]
+    ) async throws {
+        let request = api.validateStreamRequest(
+            sessionId: sessionId,
+            transactionFiles: transactionFiles,
+            proofFiles: proofFiles
+        )
+
+        try await withCheckedThrowingContinuation { continuation in
+            let client = ValidationSSEClient()
+            var didFinish = false
+
+            func completeOnce(_ work: () -> Void) {
+                guard !didFinish else { return }
+                didFinish = true
+                work()
+                self.validationSSEClient = nil
+            }
+
+            self.validationSSEClient = client
+
+            client.onProgress = { [weak self] stage, percent in
+                self?.validationStage = stage
+                self?.validationPercent = percent
+            }
+
+            client.onDone = { [weak self] response in
+                guard let self = self else { return }
+                completeOnce {
+                    self.applyValidationResponse(response)
+                    continuation.resume()
+                }
+            }
+
+            client.onError = { [weak self] message in
+                completeOnce {
+                    self?.validationSSEClient?.cancel()
+                    continuation.resume(throwing: NSError(
+                        domain: "ValidationSSEClient",
+                        code: 1,
+                        userInfo: [NSLocalizedDescriptionKey: message]
+                    ))
+                }
+            }
+
+            client.start(
+                url: request.url,
+                body: request.body,
+                contentType: request.contentType
+            )
+        }
+    }
+
+    private func applyValidationResponse(_ response: ValidationResponse) {
+        summary = response.summary
+        validatedRows = (response.validatedTransactions ?? []).map { ResultRow(from: $0) }
+        discrepancies = (response.discrepancies ?? []).map { ResultRow(from: $0) }
+        unmatchedTransactions = (response.unmatchedTransactions ?? []).map { ResultRow(from: $0) }
+        unmatchedProofs = (response.unmatchedProofs ?? []).map { ResultRow(from: $0) }
+        recommendations = (response.recommendations ?? []).map { ResultRow(from: $0) }
     }
 
     /// Load all selected files (photos + documents) into payloads for upload.
@@ -237,6 +316,8 @@ final class ValidationViewModel: ObservableObject {
 
     func clear() {
         summary = nil
+        validationStage = nil
+        validationPercent = nil
         validatedRows = []
         discrepancies = []
         unmatchedTransactions = []

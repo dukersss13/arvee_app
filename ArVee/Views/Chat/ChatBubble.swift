@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ChatBubble: View {
     let message: ChatMessage
+    var onQuickReplyTap: ((String) -> Void)? = nil
 
     private var isUser: Bool { message.role == .user }
 
@@ -63,6 +64,43 @@ struct ChatBubble: View {
             if let table = message.comparisonTable, !isUser {
                 ComparisonTableCard(table: table)
                     .padding(.trailing, 60)
+            }
+
+            // Quick-reply card options
+            if let quickReplies = message.quickReplies,
+               !quickReplies.isEmpty,
+               !isUser,
+               !message.isPending {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Try one of these")
+                        .font(.system(.caption, design: .rounded).weight(.semibold))
+                        .foregroundColor(.arveeInkMuted)
+
+                    ForEach(quickReplies, id: \.self) { reply in
+                        Button {
+                            onQuickReplyTap?(reply)
+                        } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: "arrow.turn.down.right")
+                                    .font(.system(size: 11, weight: .semibold))
+                                    .foregroundColor(.arveeTeal)
+                                Text(reply)
+                                    .font(.system(.subheadline, design: .rounded))
+                                    .foregroundColor(.arveeInk)
+                                    .multilineTextAlignment(.leading)
+                                Spacer(minLength: 0)
+                            }
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 10)
+                            .background(Color.arveeTealSoft.opacity(0.45))
+                            .cornerRadius(10)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(12)
+                .arveeCard(cornerRadius: 14)
+                .padding(.trailing, 60)
             }
         }
         .padding(.horizontal, 12)

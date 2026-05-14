@@ -191,6 +191,32 @@ final class APIService {
         return try decoder.decode(ValidationResponse.self, from: data)
     }
 
+    func validateStreamRequest(
+        sessionId: String,
+        transactionFiles: [FilePayload],
+        proofFiles: [FilePayload]
+    ) -> (url: URL, body: Data, contentType: String) {
+        let boundary = UUID().uuidString
+        var body = Data()
+
+        appendField(&body, name: "sessionId", value: sessionId, boundary: boundary)
+
+        for file in transactionFiles {
+            appendFile(&body, name: "transactions", file: file, boundary: boundary)
+        }
+        for file in proofFiles {
+            appendFile(&body, name: "proofs", file: file, boundary: boundary)
+        }
+
+        body.append("--\(boundary)--\r\n".data(using: .utf8)!)
+
+        return (
+            url: URL(string: "\(baseURL)/api/validate/stream")!,
+            body: body,
+            contentType: "multipart/form-data; boundary=\(boundary)"
+        )
+    }
+
     // MARK: - Chat
 
     func chatAsk(sessionId: String, message: String) async throws -> ChatAskResponse {

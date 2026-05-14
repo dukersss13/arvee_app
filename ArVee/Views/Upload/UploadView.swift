@@ -264,16 +264,33 @@ struct UploadView: View {
 
     private var validatingOverlay: some View {
         VStack(spacing: 14) {
-            ProgressView()
-                .controlSize(.large)
-                .tint(.arveeTeal)
-            Text("Validating your files...")
+            HStack {
+                Text("Validation in progress")
+                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                    .foregroundColor(.arveeInk)
+                Spacer()
+                if let percent = validationVM.validationPercent {
+                    Text("\(max(0, min(percent, 100)))%")
+                        .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                        .foregroundColor(.arveeTeal)
+                }
+            }
+
+            ProgressView(
+                value: Double(max(0, min(validationVM.validationPercent ?? 0, 100))),
+                total: 100
+            )
+            .tint(.arveeTeal)
+
+            Text(validationVM.validationStage ?? "Validating your files...")
                 .font(.system(.subheadline, design: .rounded).weight(.medium))
                 .foregroundColor(.arveeInk)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
             Text("This may take a moment while we process your documents")
                 .font(.caption)
                 .foregroundColor(.arveeInkMuted)
-                .multilineTextAlignment(.center)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(24)
         .frame(maxWidth: .infinity)

@@ -79,11 +79,6 @@ final class ChatViewModel: ObservableObject {
             guard let self = self else { return }
             self.processingStage = stage
             self.processingPercent = percent
-            if self.messages.indices.contains(assistantIndex),
-               self.messages[assistantIndex].isPending,
-               self.isBufferingMessage(self.messages[assistantIndex].text) {
-                self.messages[assistantIndex].text = stage
-            }
         }
 
         client.onDone = { [weak self] response in

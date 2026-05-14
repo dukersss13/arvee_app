@@ -136,7 +136,9 @@ struct ChatView: View {
                 ScrollView {
                     LazyVStack(spacing: 12) {
                         ForEach(viewModel.messages) { msg in
-                            ChatBubble(message: msg)
+                            ChatBubble(message: msg) { reply in
+                                sendQuickReply(reply)
+                            }
                                 .id(msg.id)
                         }
                     }
@@ -155,28 +157,6 @@ struct ChatView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-
-            // Quick replies after last assistant message
-            if !viewModel.isStreaming,
-               let replies = viewModel.messages.last?.quickReplies,
-               !replies.isEmpty {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        ForEach(replies, id: \.self) { reply in
-                            Button {
-                                viewModel.inputText = reply
-                                send()
-                            } label: {
-                                Text(reply)
-                            }
-                            .buttonStyle(ArveePillButtonStyle())
-                        }
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                }
-                .background(Color.arveePaper.opacity(0.95))
-            }
 
             if viewModel.isStreaming {
                 HStack(spacing: 6) {
@@ -279,6 +259,11 @@ struct ChatView: View {
                 proxy.scrollTo(lastId, anchor: .bottom)
             }
         }
+    }
+
+    private func sendQuickReply(_ reply: String) {
+        viewModel.inputText = reply
+        send()
     }
 }
 
