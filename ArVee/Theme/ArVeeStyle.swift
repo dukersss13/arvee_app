@@ -280,8 +280,10 @@ private struct ArveeKeyboardDismissToolbarModifier: ViewModifier {
             .toolbar {
                 ToolbarItemGroup(placement: .keyboard) {
                     Spacer()
-                    Button("Done") {
+                    Button {
                         UIApplication.shared.arveeEndEditing()
+                    } label: {
+                        Label("Hide Keyboard", systemImage: "keyboard.chevron.compact.down")
                     }
                     .font(.system(.body, design: .rounded).weight(.semibold))
                     .foregroundColor(.arveeTeal)
