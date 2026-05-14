@@ -135,7 +135,7 @@ struct AuthView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 80, height: 80)
-                    .offset(y: 3)
+                    .offset(y: 1)
                     .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
                     .overlay(
                         RoundedRectangle(cornerRadius: 20, style: .continuous)
