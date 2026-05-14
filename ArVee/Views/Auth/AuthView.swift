@@ -73,34 +73,43 @@ struct AuthView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 0) {
-                    // ── Hero ──
-                    heroSection
-                        .padding(.top, 48)
-                        .padding(.bottom, 32)
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(spacing: 0) {
+                        // ── Hero ──
+                        heroSection
+                            .padding(.top, 48)
+                            .padding(.bottom, 32)
 
-                    // ── Form Card ──
-                    formCard
-                        .padding(.horizontal, 24)
-                        .padding(.bottom, 16)
+                        // ── Form Card ──
+                        formCard
+                            .padding(.horizontal, 24)
+                            .padding(.bottom, 16)
+                            .id("formCard")
 
-                    // ── Divider ──
-                    orDivider
-                        .padding(.horizontal, 40)
-                        .padding(.bottom, 16)
+                        // ── Divider ──
+                        orDivider
+                            .padding(.horizontal, 40)
+                            .padding(.bottom, 16)
 
-                    // ── Google ──
-                    googleButton
-                        .padding(.horizontal, 24)
-                        .padding(.bottom, 32)
+                        // ── Google ──
+                        googleButton
+                            .padding(.horizontal, 24)
+                            .padding(.bottom, 32)
 
-                    // ── Footer ──
-                    footer
-                        .padding(.bottom, 24)
+                        // ── Footer ──
+                        footer
+                            .padding(.bottom, 24)
+                    }
+                }
+                .scrollDismissesKeyboard(.interactively)
+                .onChange(of: focusedField) { _, newValue in
+                    guard newValue != nil else { return }
+                    withAnimation(.easeOut(duration: 0.25)) {
+                        proxy.scrollTo("formCard", anchor: .top)
+                    }
                 }
             }
-            .scrollDismissesKeyboard(.interactively)
             .arveePageBackground()
             .navigationBarTitleDisplayMode(.inline)
             .arveeKeyboardDismissToolbar()

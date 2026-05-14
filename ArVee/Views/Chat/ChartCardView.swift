@@ -45,7 +45,7 @@ struct ChartCardView: View {
                 }
             }
 
-            Text("Tap chart to show exact values")
+            Text("Touch bar to show exact values")
                 .font(.system(.caption2, design: .rounded).weight(.medium))
                 .foregroundColor(.arveeInkMuted)
 
@@ -63,12 +63,6 @@ struct ChartCardView: View {
                 }
             }
             .frame(height: chartHeight)
-            .overlay(alignment: .top) {
-                if let summary = selectionSummary {
-                    selectionOverlay(summary)
-                        .padding(.top, 4)
-                }
-            }
         }
         .padding()
         .arveeCard(cornerRadius: 12)
@@ -176,6 +170,7 @@ struct ChartCardView: View {
     @ViewBuilder
     private var pieChart: some View {
         if let labels = chart.labels, let values = chart.values {
+            let legendDomain = pieLegendDomain(labels: labels, values: values)
             Chart {
                 ForEach(Array(zip(labels, values).enumerated()), id: \.element.0) { idx, pair in
                     SectorMark(
@@ -191,7 +186,7 @@ struct ChartCardView: View {
             .chartAngleSelection(value: $selectedPieAmount)
             .chartLegend(position: .bottom, spacing: 8)
             .chartForegroundStyleScale(
-                domain: labels,
+                domain: legendDomain,
                 range: Array(Color.arveeChartPalette.prefix(labels.count))
             )
         }
@@ -270,6 +265,22 @@ struct ChartCardView: View {
         return nil
     }
 
+    private func pieLegendDomain(labels: [String], values: [Double]) -> [String] {
+        guard labels.count == values.count, !labels.isEmpty else {
+            return labels
+        }
+
+        let total = values.reduce(0, +)
+        guard total > 0 else {
+            return labels
+        }
+
+        return zip(labels, values).map { label, value in
+            let percent = Int(((value / total) * 100).rounded())
+            return "\(label) (\(percent)%)"
+        }
+    }
+
     private func valueTag(_ text: String) -> some View {
         Text(text)
             .font(.system(.caption2, design: .rounded).weight(.semibold))
@@ -284,13 +295,18 @@ struct ChartCardView: View {
 
     private func selectionOverlay(_ text: String) -> some View {
         Text(text)
-            .font(.system(.caption, design: .rounded).weight(.semibold))
-            .foregroundColor(.arveeTeal)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 5)
+            .font(.system(.body, design: .rounded).weight(.bold))
+            .foregroundColor(.arveeInk)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
             .background(
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .fill(Color.arveeTealSoft.opacity(0.35))
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(Color.arveePaper.opacity(0.96))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .stroke(Color.arveeTeal.opacity(0.28), lineWidth: 1)
+                    )
+                    .shadow(color: Color.arveeInk.opacity(0.14), radius: 8, x: 0, y: 3)
             )
     }
 

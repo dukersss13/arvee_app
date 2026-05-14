@@ -37,7 +37,7 @@ struct ChatBubble: View {
                             .padding(.horizontal, 14)
                             .padding(.vertical, 12)
                             .foregroundColor(isUser ? .white : .arveeInk)
-                            .frame(maxWidth: 304, alignment: .leading)
+                            .fixedSize(horizontal: false, vertical: true)
                             .background(bubbleFill)
                             .clipShape(BubbleShape(isUser: isUser, radius: bubbleCornerRadius, tailSize: 0))
                             .overlay(
