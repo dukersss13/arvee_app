@@ -5,6 +5,7 @@ struct ChatView: View {
     @ObservedObject var viewModel: ChatViewModel
     @FocusState private var inputFocused: Bool
     @State private var welcomeScale: CGFloat = 0.6
+    @State private var showingQuickSuggestions = false
 
     private let suggestions = [
         "How much did I spend on food?",
@@ -16,7 +17,7 @@ struct ChatView: View {
     var body: some View {
         NavigationStack {
             Group {
-                if viewModel.messages.isEmpty {
+                if viewModel.messages.isEmpty || showingQuickSuggestions {
                     welcomeView
                 } else {
                     chatContent
@@ -28,9 +29,22 @@ struct ChatView: View {
             .toolbarBackground(Color.arveePaper, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    if !viewModel.messages.isEmpty && !showingQuickSuggestions {
+                        Button {
+                            inputFocused = false
+                            showingQuickSuggestions = true
+                        } label: {
+                            Label("Suggestions", systemImage: "chevron.backward")
+                                .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                        }
+                        .foregroundColor(.arveeTeal)
+                    }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         viewModel.clear()
+                        showingQuickSuggestions = false
                     } label: {
                         Image(systemName: "trash")
                             .foregroundColor(.arveeInkMuted)
@@ -180,6 +194,17 @@ struct ChatView: View {
                 )
                 .shadow(color: Color.arveeInk.opacity(0.04), radius: 4, x: 0, y: 2)
 
+            if inputFocused {
+                Button {
+                    inputFocused = false
+                } label: {
+                    Image(systemName: "keyboard.chevron.compact.down")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundColor(.arveeInkMuted)
+                }
+                .accessibilityLabel("Collapse keyboard")
+            }
+
             if viewModel.isStreaming {
                 Button {
                     viewModel.cancelStream()
@@ -206,6 +231,7 @@ struct ChatView: View {
 
     private func send() {
         guard let sessionId = sessionVM.sessionId else { return }
+        showingQuickSuggestions = false
         viewModel.sendMessage(sessionId: sessionId)
         inputFocused = false
     }

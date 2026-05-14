@@ -10,6 +10,14 @@ final class ChatViewModel: ObservableObject {
     private var sseClient: SSEClient?
     private let api = APIService.shared
 
+    private let whimsicalBufferMessages = [
+        "Let me peek into your receipts...",
+        "Crunching the numbers with sparkle dust...",
+        "Shuffling pennies and spreadsheets...",
+        "One moment while I chase the totals...",
+        "Brewing a fresh spending snapshot...",
+    ]
+
     func sendMessage(sessionId: String) {
         let text = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
@@ -22,8 +30,10 @@ final class ChatViewModel: ObservableObject {
         messages.append(userMsg)
         inputText = ""
 
+        let placeholder = whimsicalBufferMessages.randomElement() ?? "Let me look into it..."
+
         let assistantMsg = ChatMessage(
-            role: .assistant, text: "", isPending: true,
+            role: .assistant, text: placeholder, isPending: true,
             chart: nil, topCategories: nil, comparisonTable: nil,
             quickReplies: nil
         )
@@ -39,6 +49,9 @@ final class ChatViewModel: ObservableObject {
 
         client.onToken = { [weak self] token in
             guard let self = self else { return }
+            if self.messages[assistantIndex].text == placeholder {
+                self.messages[assistantIndex].text = ""
+            }
             self.messages[assistantIndex].text += token
         }
 
@@ -46,8 +59,10 @@ final class ChatViewModel: ObservableObject {
             guard let self = self else { return }
             self.messages[assistantIndex].isPending = false
 
-            // Prefer streamed text over response.answer since tokens already accumulated
-            if self.messages[assistantIndex].text.isEmpty, let answer = response.answer {
+            // If no tokens were streamed, use answer payload instead of placeholder text.
+            if self.messages[assistantIndex].text == placeholder {
+                self.messages[assistantIndex].text = response.answer ?? "I found some results for you."
+            } else if self.messages[assistantIndex].text.isEmpty, let answer = response.answer {
                 self.messages[assistantIndex].text = answer
             }
 
