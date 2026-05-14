@@ -6,7 +6,6 @@ struct ChatView: View {
     @FocusState private var inputFocused: Bool
     @State private var welcomeScale: CGFloat = 0.6
     @State private var showingQuickSuggestions = false
-    @State private var bufferingPulse = false
 
     private let suggestions = [
         "How much did I spend on food?",
@@ -160,35 +159,6 @@ struct ChatView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-
-            if viewModel.isStreaming {
-                HStack(spacing: 6) {
-                    ProgressView()
-                        .controlSize(.small)
-                        .tint(.arveeTeal)
-                    Text(viewModel.processingStage ?? "Working on your request...")
-                        .font(.system(.caption, design: .rounded).weight(.semibold))
-                        .foregroundColor(.arveeTeal)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(
-                            RoundedRectangle(cornerRadius: 8)
-                                .fill(Color.arveeTealSoft.opacity(bufferingPulse ? 0.52 : 0.2))
-                        )
-                    Spacer()
-                }
-                .padding(.horizontal, 12)
-                .padding(.top, 4)
-                .onAppear {
-                    bufferingPulse = false
-                    withAnimation(.easeInOut(duration: 1.4).repeatForever(autoreverses: true)) {
-                        bufferingPulse = true
-                    }
-                }
-                .onDisappear {
-                    bufferingPulse = false
-                }
-            }
 
             Divider().overlay(Color.arveeLine)
             inputBar

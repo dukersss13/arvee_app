@@ -14,6 +14,8 @@ struct HomeView: View {
                     sessionPill
                         .padding(.top, 4)
 
+                    homeHeader
+
                     // Quick stats (only if validation results exist)
                     if validationVM.hasResults {
                         statsRow
@@ -24,7 +26,13 @@ struct HomeView: View {
 
                     // Validation summary (if results exist)
                     if validationVM.hasResults, let summary = validationVM.summary {
-                        summaryCard(summary)
+                        Button {
+                            resultsScrollTarget = .recommendations
+                            withAnimation(.spring(response: 0.3)) { selectedTab = 2 }
+                        } label: {
+                            summaryCard(summary)
+                        }
+                        .buttonStyle(.plain)
                     }
 
                     Spacer(minLength: 32)
@@ -33,10 +41,26 @@ struct HomeView: View {
             }
             .arveePageBackground()
             .navigationTitle("ArVee")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(Color.arveePaper, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
         }
+    }
+
+    // MARK: - Home Header
+
+    private var homeHeader: some View {
+        VStack(spacing: 6) {
+            Text("Receipt Validator")
+                .font(.system(.title3, design: .rounded).weight(.semibold))
+                .foregroundColor(.arveeInk)
+                .multilineTextAlignment(.center)
+            Text("Upload receipts and transactions to quickly verify totals, matches, and discrepancies.")
+                .font(.system(.subheadline, design: .rounded))
+                .foregroundColor(.arveeInkMuted)
+                .multilineTextAlignment(.center)
+        }
+        .padding(.horizontal, 24)
     }
 
     // MARK: - Session Pill

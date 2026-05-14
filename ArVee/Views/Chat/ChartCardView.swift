@@ -3,13 +3,50 @@ import Charts
 
 struct ChartCardView: View {
     let chart: ChartData
+    var allowExpand: Bool = true
+    var chartHeight: CGFloat = 240
+
+    @State private var selectedCategory: String?
+    @State private var selectedPieAmount: Double?
+    @State private var showExpandedChart = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            if let title = chart.title {
-                Text(title)
-                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                    .foregroundColor(.arveeInk)
+            HStack(alignment: .center, spacing: 8) {
+                if let title = chart.title {
+                    Text(title)
+                        .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                        .foregroundColor(.arveeInk)
+                }
+
+                Spacer(minLength: 0)
+
+                if allowExpand {
+                    Button {
+                        showExpandedChart = true
+                    } label: {
+                        Image(systemName: "arrow.up.left.and.arrow.down.right")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(.arveeTeal)
+                            .padding(8)
+                            .background(Color.arveeTealSoft.opacity(0.35))
+                            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Expand chart")
+                }
+            }
+
+            if let summary = selectionSummary {
+                Text(summary)
+                    .font(.system(.caption, design: .rounded).weight(.semibold))
+                    .foregroundColor(.arveeTeal)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 5)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .fill(Color.arveeTealSoft.opacity(0.35))
+                    )
             }
 
             Group {
@@ -25,10 +62,13 @@ struct ChartCardView: View {
                         .foregroundColor(.arveeInkMuted)
                 }
             }
-            .frame(height: 240)
+            .frame(height: chartHeight)
         }
         .padding()
         .arveeCard(cornerRadius: 12)
+        .sheet(isPresented: $showExpandedChart) {
+            ChartDetailView(chart: chart)
+        }
     }
 
     // MARK: - Bar Chart
@@ -44,8 +84,10 @@ struct ChartCardView: View {
                     )
                     .foregroundStyle(Color.arveeTeal.gradient)
                     .cornerRadius(4)
+                    .opacity(selectedCategory == nil || selectedCategory == label ? 1.0 : 0.45)
                 }
             }
+            .chartXSelection(value: $selectedCategory)
             .chartYAxis {
                 AxisMarks(position: .leading) { value in
                     AxisValueLabel {
@@ -83,9 +125,11 @@ struct ChartCardView: View {
                         .foregroundStyle(Color.arveeChartPalette[idx % Color.arveeChartPalette.count])
                         .cornerRadius(4)
                         .position(by: .value("Period", s.name))
+                        .opacity(selectedCategory == nil || selectedCategory == cat ? 1.0 : 0.45)
                     }
                 }
             }
+            .chartXSelection(value: $selectedCategory)
             .chartYAxis {
                 AxisMarks(position: .leading) { value in
                     AxisValueLabel {
@@ -124,8 +168,10 @@ struct ChartCardView: View {
                     )
                     .foregroundStyle(Color.arveeChartPalette[idx % Color.arveeChartPalette.count])
                     .cornerRadius(4)
+                    .opacity(selectedPieIndex(for: values) == nil || selectedPieIndex(for: values) == idx ? 1.0 : 0.45)
                 }
             }
+            .chartAngleSelection(value: $selectedPieAmount)
             .chartLegend(position: .bottom, spacing: 8)
             .chartForegroundStyleScale(
                 domain: labels,
@@ -142,5 +188,87 @@ struct ChartCardView: View {
             return "\(symbol)\(String(format: "%.0f", value))"
         }
         return "\(symbol)\(String(format: "%.2f", value))"
+    }
+
+    private var selectionSummary: String? {
+        switch chart.type {
+        case "bar":
+            guard
+                let labels = chart.labels,
+                let values = chart.values,
+                let selectedCategory,
+                let idx = labels.firstIndex(of: selectedCategory),
+                values.indices.contains(idx)
+            else {
+                return nil
+            }
+            return "\(selectedCategory): \(currencyLabel(values[idx]))"
+        case "grouped_bar":
+            guard
+                let categories = chart.x,
+                let series = chart.series,
+                let selectedCategory,
+                let idx = categories.firstIndex(of: selectedCategory)
+            else {
+                return nil
+            }
+            let segments = series.compactMap { item -> String? in
+                guard item.values.indices.contains(idx) else { return nil }
+                return "\(item.name) \(currencyLabel(item.values[idx]))"
+            }
+            guard !segments.isEmpty else { return nil }
+            return "\(selectedCategory): \(segments.joined(separator: " · "))"
+        case "pie":
+            guard
+                let labels = chart.labels,
+                let values = chart.values,
+                let idx = selectedPieIndex(for: values),
+                labels.indices.contains(idx),
+                values.indices.contains(idx)
+            else {
+                return nil
+            }
+            return "\(labels[idx]): \(currencyLabel(values[idx]))"
+        default:
+            return nil
+        }
+    }
+
+    private func selectedPieIndex(for values: [Double]) -> Int? {
+        guard let selectedPieAmount else { return nil }
+        var runningTotal = 0.0
+        for (idx, value) in values.enumerated() {
+            runningTotal += value
+            if selectedPieAmount <= runningTotal {
+                return idx
+            }
+        }
+        return values.isEmpty ? nil : (values.count - 1)
+    }
+}
+
+private struct ChartDetailView: View {
+    let chart: ChartData
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                ChartCardView(chart: chart, allowExpand: false, chartHeight: 360)
+                    .padding(16)
+            }
+            .arveePageBackground()
+            .navigationTitle(chart.title ?? "Chart")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                    .font(.system(.body, design: .rounded).weight(.semibold))
+                    .foregroundColor(.arveeTeal)
+                }
+            }
+        }
     }
 }

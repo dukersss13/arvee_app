@@ -180,39 +180,49 @@ struct ArveeTextFieldStyle: TextFieldStyle {
     }
 }
 
-// MARK: - Chat Bubble Shape (flat corner on sender side)
+// MARK: - Chat Bubble Shape
 
 struct BubbleShape: Shape {
     let isUser: Bool
+    var radius: CGFloat = 16
+    var tailSize: CGFloat = 6
 
     func path(in rect: CGRect) -> Path {
-        let r: CGFloat = 16
-        let flat: CGFloat = 4
+        let r = min(radius, min(rect.width, rect.height) / 2)
+        let tail = max(4, min(tailSize, 10))
+        var path = Path()
 
-        let tl = isUser ? r : flat
-        let tr = isUser ? r : r
-        let br = isUser ? flat : r
-        let bl = isUser ? r : r
+        path.addRoundedRect(in: rect, cornerSize: CGSize(width: r, height: r))
 
-        return Path { p in
-            p.move(to: CGPoint(x: rect.minX + tl, y: rect.minY))
-            p.addLine(to: CGPoint(x: rect.maxX - tr, y: rect.minY))
-            p.addArc(tangent1End: CGPoint(x: rect.maxX, y: rect.minY),
-                      tangent2End: CGPoint(x: rect.maxX, y: rect.minY + tr),
-                      radius: tr)
-            p.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY - br))
-            p.addArc(tangent1End: CGPoint(x: rect.maxX, y: rect.maxY),
-                      tangent2End: CGPoint(x: rect.maxX - br, y: rect.maxY),
-                      radius: br)
-            p.addLine(to: CGPoint(x: rect.minX + bl, y: rect.maxY))
-            p.addArc(tangent1End: CGPoint(x: rect.minX, y: rect.maxY),
-                      tangent2End: CGPoint(x: rect.minX, y: rect.maxY - bl),
-                      radius: bl)
-            p.addLine(to: CGPoint(x: rect.minX, y: rect.minY + tl))
-            p.addArc(tangent1End: CGPoint(x: rect.minX, y: rect.minY),
-                      tangent2End: CGPoint(x: rect.minX + tl, y: rect.minY),
-                      radius: tl)
+        let tailPath = Path { p in
+            if isUser {
+                let baseY = rect.maxY - r - 1
+                p.move(to: CGPoint(x: rect.maxX - r + 2, y: baseY - 3))
+                p.addQuadCurve(
+                    to: CGPoint(x: rect.maxX + tail, y: baseY + 3),
+                    control: CGPoint(x: rect.maxX + tail * 0.5, y: baseY)
+                )
+                p.addQuadCurve(
+                    to: CGPoint(x: rect.maxX - r + 1, y: baseY + 7),
+                    control: CGPoint(x: rect.maxX + tail * 0.35, y: baseY + 8)
+                )
+            } else {
+                let baseY = rect.maxY - r - 1
+                p.move(to: CGPoint(x: rect.minX + r - 2, y: baseY - 3))
+                p.addQuadCurve(
+                    to: CGPoint(x: rect.minX - tail, y: baseY + 3),
+                    control: CGPoint(x: rect.minX - tail * 0.5, y: baseY)
+                )
+                p.addQuadCurve(
+                    to: CGPoint(x: rect.minX + r - 1, y: baseY + 7),
+                    control: CGPoint(x: rect.minX - tail * 0.35, y: baseY + 8)
+                )
+            }
+            p.closeSubpath()
         }
+
+        path.addPath(tailPath)
+        return path
     }
 }
 

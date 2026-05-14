@@ -94,20 +94,30 @@ struct SettingsView: View {
                     .listRowBackground(Color.arveeSand.opacity(0.3))
 
                     DisclosureGroup("Advanced") {
-                        TextField("API Base URL", text: $apiBaseURL)
-                            .font(.system(.body, design: .monospaced))
-                            .textInputAutocapitalization(.never)
-                            .autocorrectionDisabled()
-                            .keyboardType(.URL)
-                            .onChange(of: apiBaseURL) { _, newValue in
-                                let normalized = APIService.normalizedBaseURL(newValue)
-                                if normalized != newValue {
-                                    apiBaseURL = normalized
-                                    return
+                        if activeProfile == .local {
+                            TextField("API Base URL", text: $apiBaseURL)
+                                .font(.system(.body, design: .monospaced))
+                                .textInputAutocapitalization(.never)
+                                .autocorrectionDisabled()
+                                .keyboardType(.URL)
+                                .onChange(of: apiBaseURL) { _, newValue in
+                                    let normalized = APIService.normalizedBaseURL(newValue)
+                                    if normalized != newValue {
+                                        apiBaseURL = normalized
+                                        return
+                                    }
+                                    APIService.shared.setBaseURL(normalized, persist: true)
+                                    checkHealth()
                                 }
-                                APIService.shared.setBaseURL(normalized, persist: true)
-                                checkHealth()
+                        } else {
+                            LabeledContent("API Base URL") {
+                                Text(apiBaseURL)
+                                    .font(.system(.caption, design: .monospaced))
+                                    .foregroundColor(.arveeInkMuted)
+                                    .lineLimit(1)
+                                    .truncationMode(.middle)
                             }
+                        }
 
                         if showsLocalhostWarning {
                             Text("Using localhost on a physical device will fail. Use your Mac LAN IP, e.g. http://192.168.x.x:7860")

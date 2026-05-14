@@ -100,8 +100,10 @@ struct AuthView: View {
                         .padding(.bottom, 24)
                 }
             }
+            .scrollDismissesKeyboard(.interactively)
             .arveePageBackground()
             .navigationBarTitleDisplayMode(.inline)
+            .arveeKeyboardDismissToolbar()
             .onTapGesture {
                 focusedField = nil
             }
