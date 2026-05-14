@@ -5,6 +5,7 @@ import Darwin
 final class APIService {
     static let shared = APIService()
     static let defaultBaseURL = "https://arvee-backend-5hqe7uiuka-uc.a.run.app"
+    static let localDefaultPort = 7860
 
     private enum StorageKeys {
         static let apiBaseURL = "apiBaseURL"
@@ -17,6 +18,10 @@ final class APIService {
         didSet {
             baseURL = Self.normalizedBaseURL(baseURL)
         }
+    }
+
+    var activeBaseURL: String {
+        baseURL
     }
 
     var authToken: String? {
@@ -52,11 +57,30 @@ final class APIService {
         self.discoverySession = URLSession(configuration: discoveryConfig)
         self.decoder = JSONDecoder()
         if let saved = UserDefaults.standard.string(forKey: StorageKeys.apiBaseURL), !saved.isEmpty {
-            self.baseURL = saved
+            self.baseURL = Self.normalizedBaseURL(saved)
         } else {
-            self.baseURL = APIService.defaultBaseURL
+            self.baseURL = Self.normalizedBaseURL(APIService.defaultBaseURL)
+            UserDefaults.standard.set(self.baseURL, forKey: StorageKeys.apiBaseURL)
         }
-        self.baseURL = Self.normalizedBaseURL(self.baseURL)
+    }
+
+    func setBaseURL(_ rawURL: String, persist: Bool = true) {
+        let normalized = Self.normalizedBaseURL(rawURL)
+        baseURL = normalized
+        if persist {
+            UserDefaults.standard.set(normalized, forKey: StorageKeys.apiBaseURL)
+        }
+    }
+
+    static func localBaseURL(host: String, port: Int = localDefaultPort) -> String {
+        let trimmedHost = host.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmedHost.isEmpty {
+            return ""
+        }
+        if trimmedHost.contains("://") {
+            return normalizedBaseURL(trimmedHost)
+        }
+        return normalizedBaseURL("http://\(trimmedHost):\(port)")
     }
 
     func setAuthSession(token: String, email: String) {
@@ -122,9 +146,10 @@ final class APIService {
 
     /// Check if the backend is reachable and return a diagnostic message.
     func healthCheck() async -> HealthCheckResult {
-        let trimmed = Self.normalizedBaseURL(baseURL)
-        baseURL = trimmed
-        guard URL(string: "\(trimmed)/api/health") != nil else {
+        let activeURL = Self.normalizedBaseURL(baseURL)
+        setBaseURL(activeURL, persist: true)
+
+        guard URL(string: "\(activeURL)/api/health") != nil else {
             return HealthCheckResult(
                 isConnected: false,
                 message: "Invalid API URL format."
@@ -132,21 +157,62 @@ final class APIService {
         }
 
         do {
-            var request = URLRequest(url: try makeURL(path: "/api/health"))
-            request.httpMethod = "GET"
-            request.timeoutInterval = 12
-            applyAuthHeaders(&request)
+            try await requestHealth(at: activeURL)
+            return HealthCheckResult(isConnected: true, message: "Connected via \(activeURL)")
+        } catch {
+            let defaultURL = Self.normalizedBaseURL(Self.defaultBaseURL)
+            if shouldAttemptAutoDiscovery(error), activeURL != defaultURL {
+                do {
+                    try await requestHealth(at: defaultURL)
+                    setBaseURL(defaultURL, persist: true)
+                    return HealthCheckResult(
+                        isConnected: true,
+                        message: "Connected via Cloud Run fallback (\(defaultURL))"
+                    )
+                } catch {
+                    // Keep evaluating fallback options below.
+                }
+            }
 
-            let config = URLSessionConfiguration.ephemeral
-            config.timeoutIntervalForRequest = 12
-            config.timeoutIntervalForResource = 12
-            config.waitsForConnectivity = false
+            if shouldAttemptAutoDiscovery(error), let discoveredURL = await discoverBackendBaseURL() {
+                do {
+                    try await requestHealth(at: discoveredURL)
+                    setBaseURL(discoveredURL, persist: true)
+                    return HealthCheckResult(
+                        isConnected: true,
+                        message: "Connected via discovered local backend (\(discoveredURL))"
+                    )
+                } catch {
+                    // Discovery can race a backend restart; continue to mapped error.
+                }
+            }
 
-            let fastSession = URLSession(configuration: config)
-            let (data, response) = try await fastSession.data(for: request)
-            try checkHTTPResponse(response, data: data)
-            return HealthCheckResult(isConnected: true, message: "Connected")
-        } catch let error as URLError {
+            return healthFailureResult(for: error)
+        }
+    }
+
+    private func requestHealth(at baseURL: String) async throws {
+        guard let url = URL(string: "\(baseURL)/api/health") else {
+            throw APIError.invalidURL(baseURL)
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.timeoutInterval = 12
+        applyAuthHeaders(&request)
+
+        let config = URLSessionConfiguration.ephemeral
+        config.timeoutIntervalForRequest = 12
+        config.timeoutIntervalForResource = 12
+        config.waitsForConnectivity = false
+
+        let fastSession = URLSession(configuration: config)
+        let (data, response) = try await fastSession.data(for: request)
+        try checkHTTPResponse(response, data: data)
+    }
+
+    private func healthFailureResult(for error: Error) -> HealthCheckResult {
+        if let error = error as? URLError {
             switch error.code {
             case .cannotFindHost, .dnsLookupFailed:
                 return HealthCheckResult(
@@ -174,17 +240,19 @@ final class APIService {
                     message: "Network error: \(error.localizedDescription)"
                 )
             }
-        } catch let APIError.server(statusCode, message, _) {
+        }
+
+        if case let APIError.server(statusCode, message, _) = error {
             return HealthCheckResult(
                 isConnected: false,
                 message: "Backend reachable (\(statusCode)) but returned: \(message)"
             )
-        } catch {
-            return HealthCheckResult(
-                isConnected: false,
-                message: "Connection failed: \(error.localizedDescription)"
-            )
         }
+
+        return HealthCheckResult(
+            isConnected: false,
+            message: "Connection failed: \(error.localizedDescription)"
+        )
     }
 
     func createSession() async throws -> String {
@@ -374,7 +442,7 @@ final class APIService {
             // If a stale custom URL is saved, fall back to the production default first.
             if shouldAttemptAutoDiscovery(error), originalBaseURL != defaultURL {
                 do {
-                    baseURL = defaultURL
+                    setBaseURL(defaultURL, persist: true)
                     var fallbackRequest = URLRequest(url: try makeURL(path: path))
                     fallbackRequest.httpMethod = "GET"
                     applyAuthHeaders(&fallbackRequest)
@@ -382,7 +450,7 @@ final class APIService {
                     try checkHTTPResponse(fallbackResponse, data: fallbackData)
                     return fallbackData
                 } catch {
-                    baseURL = originalBaseURL
+                    setBaseURL(originalBaseURL, persist: false)
                 }
             }
 
@@ -393,7 +461,7 @@ final class APIService {
                 throw error
             }
 
-            baseURL = discoveredURL
+            setBaseURL(discoveredURL, persist: true)
             var retryRequest = URLRequest(url: try makeURL(path: path))
             retryRequest.httpMethod = "GET"
             applyAuthHeaders(&retryRequest)
@@ -425,7 +493,7 @@ final class APIService {
             // If a stale custom URL is saved, fall back to the production default first.
             if shouldAttemptAutoDiscovery(error), originalBaseURL != defaultURL {
                 do {
-                    baseURL = defaultURL
+                    setBaseURL(defaultURL, persist: true)
                     var fallbackRequest = URLRequest(url: try makeURL(path: path))
                     fallbackRequest.httpMethod = "POST"
                     fallbackRequest.setValue(contentType, forHTTPHeaderField: "Content-Type")
@@ -435,7 +503,7 @@ final class APIService {
                     try checkHTTPResponse(fallbackResponse, data: fallbackData)
                     return fallbackData
                 } catch {
-                    baseURL = originalBaseURL
+                    setBaseURL(originalBaseURL, persist: false)
                 }
             }
 
@@ -446,7 +514,7 @@ final class APIService {
                 throw error
             }
 
-            baseURL = discoveredURL
+            setBaseURL(discoveredURL, persist: true)
             var retryRequest = URLRequest(url: try makeURL(path: path))
             retryRequest.httpMethod = "POST"
             retryRequest.setValue(contentType, forHTTPHeaderField: "Content-Type")

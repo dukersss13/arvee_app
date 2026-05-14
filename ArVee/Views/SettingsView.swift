@@ -1,15 +1,53 @@
 import SwiftUI
 
 struct SettingsView: View {
+    private enum BackendProfile: String, CaseIterable {
+        case cloudRun
+        case local
+
+        var label: String {
+            switch self {
+            case .cloudRun:
+                return "Cloud Run"
+            case .local:
+                return "Local LAN"
+            }
+        }
+    }
+
     @AppStorage("apiBaseURL") private var apiBaseURL = APIService.defaultBaseURL
+    @AppStorage("backendProfile") private var backendProfileRaw = BackendProfile.cloudRun.rawValue
+    @AppStorage("localBackendHost") private var localBackendHost = ""
     @ObservedObject var authViewModel: AuthViewModel
     @State private var isConnected: Bool? = nil
     @State private var isChecking = false
+    @State private var healthMessage = "Not checked"
 
     var body: some View {
         NavigationStack {
             Form {
                 Section {
+                    Picker("Backend", selection: $backendProfileRaw) {
+                        ForEach(BackendProfile.allCases, id: \.rawValue) { profile in
+                            Text(profile.label).tag(profile.rawValue)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .onChange(of: backendProfileRaw) { _, _ in
+                        applyBackendProfile()
+                    }
+
+                    if activeProfile == .local && !isRunningOnSimulator {
+                        TextField("Mac LAN IP or host", text: $localBackendHost)
+                            .font(.system(.body, design: .monospaced))
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                            .keyboardType(.URL)
+                            .onChange(of: localBackendHost) { _, _ in
+                                applyBackendProfile()
+                            }
+                    }
+
                     // Connection status row
                     HStack(spacing: 10) {
                         ZStack {
@@ -33,6 +71,15 @@ struct SettingsView: View {
                             Text(statusText)
                                 .font(.caption)
                                 .foregroundColor(.arveeInkMuted)
+                            Text(healthMessage)
+                                .font(.caption2)
+                                .foregroundColor(.arveeInkMuted)
+                                .lineLimit(2)
+                            Text(apiBaseURL)
+                                .font(.system(.caption2, design: .monospaced))
+                                .foregroundColor(.arveeInkMuted)
+                                .lineLimit(1)
+                                .truncationMode(.middle)
                         }
                         Spacer()
                         Button {
@@ -58,7 +105,7 @@ struct SettingsView: View {
                                     apiBaseURL = normalized
                                     return
                                 }
-                                APIService.shared.baseURL = normalized
+                                APIService.shared.setBaseURL(normalized, persist: true)
                                 checkHealth()
                             }
 
@@ -131,7 +178,11 @@ struct SettingsView: View {
                 if normalized != apiBaseURL {
                     apiBaseURL = normalized
                 }
-                APIService.shared.baseURL = normalized
+                APIService.shared.setBaseURL(normalized, persist: true)
+                hydrateLocalHost(from: normalized)
+                if activeProfile == .local {
+                    applyBackendProfile()
+                }
                 checkHealth()
             }
         }
@@ -146,6 +197,10 @@ struct SettingsView: View {
         if isChecking { return "Checking" }
         if isConnected == nil { return "Not checked" }
         return (isConnected ?? false) ? "Online" : "Offline"
+    }
+
+    private var activeProfile: BackendProfile {
+        BackendProfile(rawValue: backendProfileRaw) ?? .cloudRun
     }
 
     private var showsLocalhostWarning: Bool {
@@ -165,8 +220,62 @@ struct SettingsView: View {
         isChecking = true
         Task {
             let result = await APIService.shared.healthCheck()
-            isConnected = result.isConnected
-            isChecking = false
+            await MainActor.run {
+                apiBaseURL = APIService.shared.activeBaseURL
+                healthMessage = result.message
+                isConnected = result.isConnected
+                isChecking = false
+            }
         }
+    }
+
+    private func applyBackendProfile() {
+        let selected = activeProfile
+        switch selected {
+        case .cloudRun:
+            let target = APIService.normalizedBaseURL(APIService.defaultBaseURL)
+            apiBaseURL = target
+            APIService.shared.setBaseURL(target, persist: true)
+            healthMessage = "Using managed Cloud Run backend."
+
+        case .local:
+            let hostInput = resolvedLocalHostInput()
+            guard !hostInput.isEmpty else {
+                isConnected = nil
+                healthMessage = "Enter your Mac LAN IP for Local LAN mode."
+                return
+            }
+            let target = APIService.localBaseURL(host: hostInput)
+            guard !target.isEmpty else {
+                isConnected = nil
+                healthMessage = "Invalid local host."
+                return
+            }
+            apiBaseURL = target
+            APIService.shared.setBaseURL(target, persist: true)
+            healthMessage = "Using local backend at \(target)."
+        }
+
+        checkHealth()
+    }
+
+    private func resolvedLocalHostInput() -> String {
+        if isRunningOnSimulator {
+            return "localhost"
+        }
+        return localBackendHost.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private func hydrateLocalHost(from urlString: String) {
+        guard let components = URLComponents(string: urlString),
+              let host = components.host,
+              !host.isEmpty,
+              host != "localhost",
+              host != "127.0.0.1"
+        else {
+            return
+        }
+        localBackendHost = host
+    }
     }
 }

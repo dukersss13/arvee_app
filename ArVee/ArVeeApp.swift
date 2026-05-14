@@ -6,11 +6,10 @@ struct ArVeeApp: App {
         // Ensure API URL is set on launch — write default if not yet saved
         let key = "apiBaseURL"
         if let saved = UserDefaults.standard.string(forKey: key), !saved.isEmpty {
-            APIService.shared.baseURL = saved
+            APIService.shared.setBaseURL(saved, persist: true)
         } else {
             let defaultURL = APIService.defaultBaseURL
-            UserDefaults.standard.set(defaultURL, forKey: key)
-            APIService.shared.baseURL = defaultURL
+            APIService.shared.setBaseURL(defaultURL, persist: true)
         }
 
         // Global appearance: warm paper theme
