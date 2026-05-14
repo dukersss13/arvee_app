@@ -278,4 +278,3 @@ struct SettingsView: View {
         localBackendHost = host
     }
     }
-}
