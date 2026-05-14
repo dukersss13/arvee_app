@@ -217,7 +217,9 @@ struct AuthView: View {
                 } trailing: {
                     Button {
                         let wasFocused = focusedField == .password
-                        viewModel.showPassword.toggle()
+                        UIView.performWithoutAnimation {
+                            viewModel.showPassword.toggle()
+                        }
                         if wasFocused {
                             DispatchQueue.main.async {
                                 focusedField = .password
@@ -255,7 +257,9 @@ struct AuthView: View {
                     } trailing: {
                         Button {
                             let wasFocused = focusedField == .confirmPassword
-                            viewModel.showConfirmPassword.toggle()
+                            UIView.performWithoutAnimation {
+                                viewModel.showConfirmPassword.toggle()
+                            }
                             if wasFocused {
                                 DispatchQueue.main.async {
                                     focusedField = .confirmPassword

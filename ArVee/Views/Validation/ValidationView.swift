@@ -38,6 +38,7 @@ struct ValidationView: View {
                 }
             }
             .arveePageBackground()
+            .arveeKeyboardDismissToolbar()
             .navigationTitle("Results")
             .navigationBarTitleDisplayMode(.large)
             .toolbarBackground(Color.arveePaper, for: .navigationBar)
@@ -509,7 +510,6 @@ struct ResultCardView: View {
 
             if let selectedCategory = unifiedMatchedCategory {
                 HStack {
-                    Spacer()
                     if isCategoryEditable {
                         Menu {
                             ForEach(editableCategoryOptions(for: selectedCategory), id: \.self) { option in
