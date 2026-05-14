@@ -53,6 +53,7 @@ final class ChatViewModel: ObservableObject {
         )
         messages.append(assistantMsg)
         let assistantIndex = messages.count - 1
+        var streamedAnyToken = false
 
         isStreaming = true
         errorMessage = nil
@@ -69,6 +70,7 @@ final class ChatViewModel: ObservableObject {
             guard let self = self else { return }
             guard self.messages.indices.contains(assistantIndex) else { return }
             self.stopBufferingUpdates()
+            streamedAnyToken = true
             if self.messages[assistantIndex].text == placeholder {
                 self.messages[assistantIndex].text = ""
             }
@@ -93,10 +95,14 @@ final class ChatViewModel: ObservableObject {
             self.stopBufferingUpdates()
             self.messages[assistantIndex].isPending = false
 
-            // If no tokens were streamed, use answer payload instead of placeholder text.
-            if self.messages[assistantIndex].text == placeholder {
-                self.messages[assistantIndex].text = response.answer ?? "I found some results for you."
-            } else if self.messages[assistantIndex].text.isEmpty, let answer = response.answer {
+            let serverAnswer = response.answer?.trimmingCharacters(in: .whitespacesAndNewlines)
+
+            // Never persist buffering text as the final assistant response.
+            if !streamedAnyToken || self.isBufferingMessage(self.messages[assistantIndex].text) {
+                self.messages[assistantIndex].text = serverAnswer?.isEmpty == false
+                    ? serverAnswer!
+                    : "I found some results for you."
+            } else if self.messages[assistantIndex].text.isEmpty, let answer = serverAnswer {
                 self.messages[assistantIndex].text = answer
             }
 

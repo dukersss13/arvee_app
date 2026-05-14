@@ -3,10 +3,26 @@ import SwiftUI
 /// Card for a single recommendation — shows the suggested match and an Accept button.
 struct RecommendationCardView: View {
     let row: ResultRow
+    let isSelected: Bool
+    let onToggleSelected: () -> Void
     let onAccept: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Button(action: onToggleSelected) {
+                    Label(
+                        isSelected ? "Selected" : "Select",
+                        systemImage: isSelected ? "checkmark.square.fill" : "square"
+                    )
+                    .font(.system(.caption, design: .rounded).weight(.semibold))
+                    .foregroundColor(isSelected ? .arveeTeal : .arveeInkMuted)
+                }
+                .buttonStyle(.plain)
+
+                Spacer()
+            }
+
             // Transaction side
             sideLabel("Transaction", color: .arveeTeal)
             HStack {

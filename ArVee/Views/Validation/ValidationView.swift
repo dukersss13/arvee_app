@@ -7,6 +7,7 @@ struct ValidationView: View {
     @State private var isExporting = false
     @State private var showManualMatch = false
     @State private var expandedSections: Set<ResultsSection> = Set(ResultsSection.allCases)
+    @State private var selectedRecommendationIds: Set<UUID> = []
 
     var body: some View {
         NavigationStack {
@@ -195,20 +196,52 @@ struct ValidationView: View {
                             count: viewModel.recommendations.count,
                             accentColor: .arveeTeal,
                             icon: "sparkles",
-                            action: ("Accept All", {
-                                viewModel.acceptAllRecommendations()
-                            })
+                            action: (
+                                selectedRecommendationIds.isEmpty
+                                    ? "Select items"
+                                    : "Accept Selected (\(selectedRecommendationIds.count))",
+                                {
+                                    viewModel.acceptRecommendations(withIds: selectedRecommendationIds)
+                                    selectedRecommendationIds.removeAll()
+                                }
+                            )
                         ) {
                             ForEach(Array(viewModel.recommendations.enumerated()), id: \.element.id) { idx, row in
-                                RecommendationCardView(row: row) {
+                                RecommendationCardView(
+                                    row: row,
+                                    isSelected: selectedRecommendationIds.contains(row.id),
+                                    onToggleSelected: {
+                                        if selectedRecommendationIds.contains(row.id) {
+                                            selectedRecommendationIds.remove(row.id)
+                                        } else {
+                                            selectedRecommendationIds.insert(row.id)
+                                        }
+                                    }
+                                ) {
                                     viewModel.acceptRecommendation(at: idx)
+                                    selectedRecommendationIds.remove(row.id)
                                 }
                             }
                         }
+
+                        Button {
+                            viewModel.acceptAllRecommendations()
+                            selectedRecommendationIds.removeAll()
+                        } label: {
+                            Text("Accept All Recommendations")
+                                .font(.system(.caption, design: .rounded).weight(.semibold))
+                                .foregroundColor(.arveeTeal)
+                        }
+                        .padding(.horizontal, 16)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
 
                     Spacer(minLength: 32)
                 }
+            }
+            .onChange(of: viewModel.recommendations.map(\.id)) { _, ids in
+                let availableIds = Set(ids)
+                selectedRecommendationIds = selectedRecommendationIds.intersection(availableIds)
             }
             .onChange(of: scrollTarget) { _, target in
                 if let target {
@@ -270,7 +303,40 @@ struct ValidationView: View {
     ) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             // Header
-            Button {
+            HStack(spacing: 8) {
+                Image(systemName: icon)
+                    .font(.caption)
+                    .foregroundColor(accentColor)
+                Text(title)
+                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                    .foregroundColor(.arveeInk)
+                Text("\(count)")
+                    .font(.system(size: 11, weight: .bold, design: .rounded))
+                    .foregroundColor(accentColor)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(accentColor.opacity(0.1))
+                    .cornerRadius(6)
+                Spacer()
+
+                if let action {
+                    Button(action: action.1) {
+                        Text(action.0)
+                            .font(.system(.caption, design: .rounded).weight(.semibold))
+                            .foregroundColor(action.0 == "Select items" ? .arveeInkMuted : .arveeTeal)
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(action.0 == "Select items")
+                }
+
+                Image(systemName: expandedSections.contains(section) ? "chevron.up" : "chevron.down")
+                    .font(.caption.weight(.semibold))
+                    .foregroundColor(.arveeInkMuted)
+            }
+            .id(section.rawValue)
+            .padding(.horizontal, 16)
+            .contentShape(Rectangle())
+            .onTapGesture {
                 withAnimation(.easeInOut(duration: 0.2)) {
                     if expandedSections.contains(section) {
                         expandedSections.remove(section)
@@ -278,38 +344,7 @@ struct ValidationView: View {
                         expandedSections.insert(section)
                     }
                 }
-            } label: {
-                HStack(spacing: 8) {
-                    Image(systemName: icon)
-                        .font(.caption)
-                        .foregroundColor(accentColor)
-                    Text(title)
-                        .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                        .foregroundColor(.arveeInk)
-                    Text("\(count)")
-                        .font(.system(size: 11, weight: .bold, design: .rounded))
-                        .foregroundColor(accentColor)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(accentColor.opacity(0.1))
-                        .cornerRadius(6)
-                    Spacer()
-
-                    if let action {
-                        Button(action: action.1) {
-                            Text(action.0)
-                                .font(.system(.caption, design: .rounded).weight(.semibold))
-                                .foregroundColor(.arveeTeal)
-                        }
-                    }
-
-                    Image(systemName: expandedSections.contains(section) ? "chevron.up" : "chevron.down")
-                        .font(.caption.weight(.semibold))
-                        .foregroundColor(.arveeInkMuted)
-                }
             }
-            .id(section.rawValue)
-            .padding(.horizontal, 16)
 
             // Content
             if expandedSections.contains(section) {

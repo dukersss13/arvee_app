@@ -259,6 +259,19 @@ final class ValidationViewModel: ObservableObject {
         }
     }
 
+    /// Accept a user-selected subset of recommendations by row ID.
+    func acceptRecommendations(withIds selectedIds: Set<UUID>) {
+        guard !selectedIds.isEmpty else { return }
+
+        let selectedIndices = recommendations.enumerated().compactMap { idx, row in
+            selectedIds.contains(row.id) ? idx : nil
+        }
+
+        for idx in selectedIndices.sorted(by: >) {
+            acceptRecommendation(at: idx)
+        }
+    }
+
     /// Manually match an unmatched transaction with an unmatched proof.
     func manualMatch(transactionIndex: Int, proofIndex: Int) {
         guard transactionIndex < unmatchedTransactions.count,
