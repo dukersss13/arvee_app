@@ -5,18 +5,38 @@ struct MainTabView: View {
     @StateObject private var sessionVM = SessionViewModel()
     @StateObject private var validationVM = ValidationViewModel()
     @StateObject private var chatVM = ChatViewModel()
+    @AppStorage("arvee_completed_onboarding") private var hasCompletedOnboarding = false
     @State private var selectedTab = 0
     @State private var resultsScrollTarget: ResultsSection?
 
     var body: some View {
         Group {
-            if authVM.isAuthenticated {
-                contentTabs
+            if !hasCompletedOnboarding {
+                OnboardingView {
+                    withAnimation(.easeInOut(duration: 0.35)) {
+                        hasCompletedOnboarding = true
+                    }
+                }
+                .transition(.opacity)
             } else {
-                AuthView(viewModel: authVM)
+                if authVM.isAuthenticated {
+                    contentTabs
+                        .transition(.asymmetric(
+                            insertion: .opacity.combined(with: .scale(scale: 0.98)),
+                            removal: .opacity
+                        ))
+                } else {
+                    AuthView(viewModel: authVM)
+                        .transition(.asymmetric(
+                            insertion: .opacity.combined(with: .move(edge: .bottom)),
+                            removal: .opacity
+                        ))
+                }
             }
         }
         .arveeKeyboardDismissToolbar()
+        .animation(.easeInOut(duration: 0.35), value: hasCompletedOnboarding)
+        .animation(.easeInOut(duration: 0.35), value: authVM.isAuthenticated)
         .onChange(of: authVM.isAuthenticated) { _, isAuthed in
             if !isAuthed {
                 sessionVM.clear()

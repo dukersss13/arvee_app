@@ -20,7 +20,7 @@ extension Color {
     static let arveeInkMuted = Color(light: .init(hex: 0x5A554D), dark: .init(hex: 0xA39B8E))
 
     // Primary SAP-inspired light blue
-    static let arveeTeal = Color(light: .init(hex: 0x4EA8DE), dark: .init(hex: 0x73BCF7))
+    static let arveeTeal = Color(light: .init(hex: 0x449DD4), dark: .init(hex: 0x68B1EE))
 
     // Deeper blue companion tone
     static let arveeTealDark = Color(light: .init(hex: 0x1F78B4), dark: .init(hex: 0x4299E1))
@@ -50,14 +50,14 @@ extension Color {
     static let arveeGlassBase = Color(light: .init(white: 1.0, alpha: 0.70), dark: .init(hex: 0x221F1D, alpha: 0.82))
     static let arveeGlassHighlight = Color(light: .init(white: 1.0, alpha: 0.48), dark: .init(hex: 0xF0EBE2, alpha: 0.06))
     static let arveeGlassStroke = Color(light: .init(hex: 0xFFFFFF, alpha: 0.52), dark: .init(hex: 0xF0EBE2, alpha: 0.18))
-    static let arveeGlowTeal = Color(light: .init(hex: 0x4EA8DE, alpha: 0.24), dark: .init(hex: 0x73BCF7, alpha: 0.22))
+    static let arveeGlowTeal = Color(light: .init(hex: 0x449DD4, alpha: 0.24), dark: .init(hex: 0x68B1EE, alpha: 0.22))
     static let arveeGlowCoral = Color(light: .init(hex: 0xEA8F58, alpha: 0.22), dark: .init(hex: 0xEA8F58, alpha: 0.20))
 
     // Soft blue background — subtle tint for sections
-    static let arveeTealSoft = Color(light: .init(hex: 0x4EA8DE, alpha: 0.08), dark: .init(hex: 0x73BCF7, alpha: 0.11))
+    static let arveeTealSoft = Color(light: .init(hex: 0x449DD4, alpha: 0.08), dark: .init(hex: 0x68B1EE, alpha: 0.11))
 
     // Step indicator colors
-    static let arveeStepComplete = Color(light: .init(hex: 0x4EA8DE), dark: .init(hex: 0x73BCF7))
+    static let arveeStepComplete = Color(light: .init(hex: 0x449DD4), dark: .init(hex: 0x68B1EE))
     static let arveeStepActive = Color(light: .init(hex: 0xEA8F58), dark: .init(hex: 0xEA8F58))
     static let arveeStepPending = Color(light: .init(hex: 0x5A554D, alpha: 0.3), dark: .init(hex: 0xA39B8E, alpha: 0.3))
 

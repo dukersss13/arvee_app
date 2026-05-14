@@ -5,7 +5,6 @@ struct SettingsView: View {
     @ObservedObject var authViewModel: AuthViewModel
     @State private var isConnected: Bool? = nil
     @State private var isChecking = false
-    @State private var statusMessage = "Not checked"
 
     var body: some View {
         NavigationStack {
@@ -28,7 +27,7 @@ struct SettingsView: View {
                             }
                         }
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("Backend Status")
+                            Text("GCP Backend Status")
                                 .font(.system(.subheadline, design: .rounded).weight(.medium))
                                 .foregroundColor(.arveeInk)
                             Text(statusText)
@@ -47,28 +46,30 @@ struct SettingsView: View {
                     }
                     .listRowBackground(Color.arveeSand.opacity(0.3))
 
-                    TextField("API Base URL", text: $apiBaseURL)
-                        .font(.system(.body, design: .monospaced))
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                        .keyboardType(.URL)
-                        .listRowBackground(Color.arveeSand.opacity(0.3))
-                        .onChange(of: apiBaseURL) { _, newValue in
-                            let normalized = APIService.normalizedBaseURL(newValue)
-                            if normalized != newValue {
-                                apiBaseURL = normalized
-                                return
+                    DisclosureGroup("Advanced") {
+                        TextField("API Base URL", text: $apiBaseURL)
+                            .font(.system(.body, design: .monospaced))
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                            .keyboardType(.URL)
+                            .onChange(of: apiBaseURL) { _, newValue in
+                                let normalized = APIService.normalizedBaseURL(newValue)
+                                if normalized != newValue {
+                                    apiBaseURL = normalized
+                                    return
+                                }
+                                APIService.shared.baseURL = normalized
+                                checkHealth()
                             }
-                            APIService.shared.baseURL = normalized
-                            checkHealth()
-                        }
 
-                    if showsLocalhostWarning {
-                        Text("Using localhost on a physical device will fail. Use your Mac LAN IP, e.g. http://192.168.x.x:7860")
-                            .font(.caption)
-                            .foregroundColor(.arveeDanger)
-                            .listRowBackground(Color.arveeSand.opacity(0.3))
+                        if showsLocalhostWarning {
+                            Text("Using localhost on a physical device will fail. Use your Mac LAN IP, e.g. http://192.168.x.x:7860")
+                                .font(.caption)
+                                .foregroundColor(.arveeDanger)
+                        }
                     }
+                    .foregroundColor(.arveeInk)
+                    .listRowBackground(Color.arveeSand.opacity(0.3))
                 } header: {
                     Text("CONNECTION")
                         .font(.arveeEyebrow())
@@ -142,9 +143,9 @@ struct SettingsView: View {
     }
 
     private var statusText: String {
-        if isChecking { return "Checking..." }
+        if isChecking { return "Checking" }
         if isConnected == nil { return "Not checked" }
-        return statusMessage
+        return (isConnected ?? false) ? "Online" : "Offline"
     }
 
     private var showsLocalhostWarning: Bool {
@@ -165,7 +166,6 @@ struct SettingsView: View {
         Task {
             let result = await APIService.shared.healthCheck()
             isConnected = result.isConnected
-            statusMessage = result.message
             isChecking = false
         }
     }

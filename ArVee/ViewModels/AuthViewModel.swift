@@ -120,8 +120,20 @@ final class AuthViewModel: ObservableObject {
             let config = try await withTimeout(seconds: 12) {
                 try await self.api.getGoogleAuthConfig()
             }
-            guard config.enabled, !config.clientId.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-                throw GoogleAuthError.notConfigured
+            guard config.enabled else {
+                throw GoogleAuthError.notConfigured(
+                    "Google sign-in is disabled on the backend. Set ARVEE_GOOGLE_OAUTH_CLIENT_ID and redeploy the GCP backend."
+                )
+            }
+            guard !config.clientId.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                throw GoogleAuthError.notConfigured(
+                    "Google sign-in backend config is incomplete. Add ARVEE_GOOGLE_OAUTH_CLIENT_ID and redeploy."
+                )
+            }
+            guard !config.redirectScheme.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                throw GoogleAuthError.notConfigured(
+                    "Google redirect scheme is missing on the backend. Set ARVEE_GOOGLE_REDIRECT_SCHEME."
+                )
             }
 
             let idToken = try await getGoogleIDToken(
@@ -352,7 +364,7 @@ private final class PresentationContextProvider: NSObject, ASWebAuthenticationPr
 }
 
 private enum GoogleAuthError: LocalizedError {
-    case notConfigured
+    case notConfigured(String)
     case invalidAuthorizationURL
     case invalidTokenURL
     case unableToStart
@@ -365,8 +377,8 @@ private enum GoogleAuthError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .notConfigured:
-            return "Google sign-in isn't available for this server yet."
+        case .notConfigured(let message):
+            return message
         case .invalidAuthorizationURL:
             return "Could not start Google login."
         case .invalidTokenURL:

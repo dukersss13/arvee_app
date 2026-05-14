@@ -175,20 +175,6 @@ struct AuthView: View {
             .pickerStyle(.segmented)
             .scaleEffect(0.9)
 
-            if focusedField != nil {
-                HStack {
-                    Spacer()
-                    Button {
-                        focusedField = nil
-                    } label: {
-                        Label("Hide Keyboard", systemImage: "keyboard.chevron.compact.down")
-                            .font(.system(.caption, design: .rounded).weight(.semibold))
-                            .foregroundColor(.arveeTeal)
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-
             // Input fields
             VStack(spacing: 14) {
                 authField(icon: "envelope.fill", placeholder: "Email") {
