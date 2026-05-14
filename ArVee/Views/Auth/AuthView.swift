@@ -153,7 +153,7 @@ struct AuthView: View {
                     .font(.system(size: 34, weight: .bold, design: .rounded))
                     .foregroundColor(.arveeInk)
 
-                Text("Don't want to see your bank statement?\nMe neither.")
+                Text("Don't want to see your bank statement?\nMe neither")
                     .font(.system(.subheadline, design: .rounded))
                     .foregroundColor(.arveeInkMuted)
                     .multilineTextAlignment(.center)
