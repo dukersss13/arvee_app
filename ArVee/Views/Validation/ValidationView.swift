@@ -128,7 +128,10 @@ struct ValidationView: View {
                         title: "Validated",
                         count: viewModel.validatedRows.count,
                         accentColor: .arveeTeal,
-                        icon: "checkmark.circle.fill"
+                        icon: "checkmark.circle.fill",
+                        action: ("Download PDF", {
+                            exportPDF()
+                        })
                     ) {
                         ForEach(viewModel.validatedRows) { row in
                             ResultCardView(row: row)
@@ -180,10 +183,7 @@ struct ValidationView: View {
                             title: "Unmatched Transactions",
                             count: viewModel.unmatchedTransactions.count,
                             accentColor: .arveeInkMuted,
-                            icon: "doc.questionmark",
-                            action: ("Manual Match", {
-                                showManualMatch = true
-                            })
+                            icon: "doc.questionmark"
                         ) {
                             ForEach(viewModel.unmatchedTransactions) { row in
                                 ResultCardView(row: row)
@@ -198,10 +198,7 @@ struct ValidationView: View {
                             title: "Unmatched Proofs",
                             count: viewModel.unmatchedProofs.count,
                             accentColor: .arveeInkMuted,
-                            icon: "photo.on.rectangle",
-                            action: ("Manual Match", {
-                                showManualMatch = true
-                            })
+                            icon: "photo.on.rectangle"
                         ) {
                             ForEach(viewModel.unmatchedProofs) { row in
                                 ResultCardView(row: row)
@@ -444,6 +441,9 @@ struct ResultCardView: View {
                 Text(row.value(for: "Transaction Date"))
                     .font(.system(size: 12.1, weight: .regular, design: .rounded))
                     .foregroundColor(.arveeInkMuted)
+                if let txCategory = matchedCategory(primary: "Transaction Category", fallback: "Category") {
+                    categoryChip(txCategory)
+                }
                 Text(row.value(for: "Transaction Total"))
                     .font(.system(size: 13.2, weight: .bold, design: .rounded).monospacedDigit())
                     .foregroundColor(.arveeInk)
@@ -463,6 +463,9 @@ struct ResultCardView: View {
                 Text(row.value(for: "Proof Date"))
                     .font(.system(size: 12.1, weight: .regular, design: .rounded))
                     .foregroundColor(.arveeInkMuted)
+                if let proofCategory = matchedCategory(primary: "Proof Category", fallback: "Category") {
+                    categoryChip(proofCategory)
+                }
                 Text(row.value(for: "Proof Total"))
                     .font(.system(size: 13.2, weight: .bold, design: .rounded).monospacedDigit())
                     .foregroundColor(.arveeInk)
@@ -477,6 +480,25 @@ struct ResultCardView: View {
                     .lineLimit(1)
             }
         }
+    }
+
+    private func matchedCategory(primary: String, fallback: String) -> String? {
+        let primaryValue = row.value(for: primary)
+        if !primaryValue.isEmpty {
+            return primaryValue
+        }
+        let fallbackValue = row.value(for: fallback)
+        return fallbackValue.isEmpty ? nil : fallbackValue
+    }
+
+    private func categoryChip(_ value: String) -> some View {
+        Text(value)
+            .font(.system(size: 10, weight: .medium, design: .rounded))
+            .foregroundColor(.arveeTeal)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 2)
+            .background(Color.arveeTealSoft)
+            .cornerRadius(4)
     }
 
     // Layout for single items (unmatched tx or proof)
