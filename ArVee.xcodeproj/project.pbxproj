@@ -66,6 +66,7 @@
 		B10027 /* DiscrepancyCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiscrepancyCardView.swift; sourceTree = "<group>"; };
 		B10028 /* RecommendationCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecommendationCardView.swift; sourceTree = "<group>"; };
 		B10029 /* ManualMatchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManualMatchView.swift; sourceTree = "<group>"; };
+		B10030 /* ArVee.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ArVee.entitlements; sourceTree = "<group>"; };
 		C10001 /* ArVee.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ArVee.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -91,6 +92,7 @@
 		E10002 /* ArVee */ = {
 			isa = PBXGroup;
 			children = (
+				B10030 /* ArVee.entitlements */,
 				B10001 /* ArVeeApp.swift */,
 				E10003 /* Models */,
 				E10004 /* Services */,
@@ -437,6 +439,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = ArVee/ArVee.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = WA48D35457;
@@ -470,6 +473,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = ArVee/ArVee.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = WA48D35457;
