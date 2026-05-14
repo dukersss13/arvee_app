@@ -71,7 +71,8 @@ final class ChatViewModel: ObservableObject {
             guard self.messages.indices.contains(assistantIndex) else { return }
             self.stopBufferingUpdates()
             streamedAnyToken = true
-            if self.messages[assistantIndex].text == placeholder {
+            if self.isBufferingMessage(self.messages[assistantIndex].text) ||
+                self.messages[assistantIndex].text == placeholder {
                 self.messages[assistantIndex].text = ""
             }
             self.messages[assistantIndex].text += token
