@@ -10,11 +10,8 @@ struct HomeView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 20) {
-                    // Session status pill
-                    sessionPill
-                        .padding(.top, 4)
-
                     homeHeader
+                        .padding(.top, 4)
 
                     // Quick stats (only if validation results exist)
                     if validationVM.hasResults {
@@ -40,7 +37,6 @@ struct HomeView: View {
                 .padding(.bottom, 24)
             }
             .arveePageBackground()
-            .navigationTitle("ArVee")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(Color.arveePaper, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
@@ -51,7 +47,7 @@ struct HomeView: View {
 
     private var homeHeader: some View {
         VStack(spacing: 6) {
-            Text("Receipt Validator")
+            Text("ArVee")
                 .font(.system(.title3, design: .rounded).weight(.semibold))
                 .foregroundColor(.arveeInk)
                 .multilineTextAlignment(.center)

@@ -28,6 +28,7 @@ struct ChatView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(Color.arveePaper, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
+            .arveeKeyboardDismissToolbar()
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     if !viewModel.messages.isEmpty {

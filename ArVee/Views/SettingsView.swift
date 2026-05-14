@@ -183,6 +183,7 @@ struct SettingsView: View {
             .navigationTitle("Settings")
             .toolbarBackground(Color.arveePaper, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
+            .arveeKeyboardDismissToolbar()
             .onAppear {
                 let normalized = APIService.normalizedBaseURL(apiBaseURL)
                 if normalized != apiBaseURL {
