@@ -11,17 +11,9 @@ struct UploadView: View {
     @State private var showTxDocPicker = false
     @State private var showProofDocPicker = false
     @State private var hourglassRotation: Double = 0
-    @State private var bufferingTextIndex = 0
     @State private var previewImage: PreviewImage?
 
     @Environment(\.openURL) private var openURL
-
-    private let bufferingTexts = [
-        "Teaching receipts to line up politely...",
-        "Tickling the totals until they confess...",
-        "Whispering with your transactions and proofs...",
-        "Polishing your validation results with sparkle...",
-    ]
 
     private var currentStep: StepState {
         if validationVM.hasResults { return .complete }
@@ -325,19 +317,9 @@ struct UploadView: View {
                 .font(.system(.subheadline, design: .rounded).weight(.semibold))
                 .foregroundColor(.arveeInk)
 
-            Text(validationVM.validationStage ?? bufferingTexts[bufferingTextIndex])
+            Text(displayedValidationStage)
                 .font(.system(.subheadline, design: .rounded).weight(.medium))
                 .foregroundColor(.arveeInk)
-                .frame(maxWidth: .infinity, alignment: .center)
-                .multilineTextAlignment(.center)
-                .animation(.easeInOut(duration: 0.25), value: bufferingTextIndex)
-                .onReceive(Timer.publish(every: 1.7, on: .main, in: .common).autoconnect()) { _ in
-                    bufferingTextIndex = (bufferingTextIndex + 1) % bufferingTexts.count
-                }
-
-            Text("This may take a moment while we process your documents")
-                .font(.caption)
-                .foregroundColor(.arveeInkMuted)
                 .frame(maxWidth: .infinity, alignment: .center)
                 .multilineTextAlignment(.center)
         }
@@ -345,6 +327,16 @@ struct UploadView: View {
         .frame(maxWidth: .infinity)
         .arveePremiumGlassCard(accent: .arveeTeal, cornerRadius: 16)
         .padding(.horizontal, 16)
+    }
+
+    private var displayedValidationStage: String {
+        guard let stage = validationVM.validationStage, !stage.isEmpty else {
+            return "Starting Validation..."
+        }
+        if stage.localizedCaseInsensitiveContains("scenic route") {
+            return "Taking the scenic route through your documents..."
+        }
+        return "Starting Validation..."
     }
 
     // MARK: - Success Card

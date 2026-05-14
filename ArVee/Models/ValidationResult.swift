@@ -24,10 +24,11 @@ struct CostSummary: Codable {
 
 /// A row from validated/discrepancy/unmatched tables.
 struct ResultRow: Identifiable, Hashable {
-    let id = UUID()
+    let id: UUID
     let fields: [String: String]
 
     init(from dict: [String: AnyCodable]) {
+        self.id = UUID()
         var mapped: [String: String] = [:]
         for (key, value) in dict {
             mapped[key] = "\(value.value)"
@@ -35,7 +36,8 @@ struct ResultRow: Identifiable, Hashable {
         self.fields = mapped
     }
 
-    init(fields: [String: String]) {
+    init(id: UUID = UUID(), fields: [String: String]) {
+        self.id = id
         self.fields = fields
     }
 

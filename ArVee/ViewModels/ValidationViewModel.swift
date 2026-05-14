@@ -52,7 +52,7 @@ final class ValidationViewModel: ObservableObject {
 
     func validate(sessionId: String) async {
         isValidating = true
-        validationStage = "Starting validation..."
+        validationStage = "Starting Validation..."
         validationPercent = 0
         errorMessage = nil
         currentSessionId = sessionId
@@ -220,9 +220,25 @@ final class ValidationViewModel: ObservableObject {
         guard index < discrepancies.count else { return }
         var row = discrepancies.remove(at: index)
         var fields = row.fields
+
+        let transactionTotal = adjustedAmount ?? parseCurrencyAmount(fields["Transaction Total"] ?? fields["total"] ?? "")
+        let proofTotal = parseCurrencyAmount(fields["Proof Total"] ?? "")
+        if let tx = transactionTotal, let proof = proofTotal, abs(tx - proof) > 0.0001 {
+            discrepancies.insert(row, at: index)
+            errorMessage = "Adjusted amount must equal proof total before accepting this match."
+            return
+        }
+
         fields["Result"] = "Validated (Manual)"
-        if let adj = adjustedAmount {
-            fields["Adjusted Amount"] = String(format: "%.2f", adj)
+        if let tx = transactionTotal {
+            fields["Adjusted Amount"] = String(format: "%.2f", tx)
+            fields["Transaction Total"] = String(format: "%.2f", tx)
+        }
+
+        if fields["Category"]?.isEmpty ?? true {
+            let txCategory = fields["Transaction Category"] ?? ""
+            let proofCategory = fields["Proof Category"] ?? ""
+            fields["Category"] = !txCategory.isEmpty ? txCategory : proofCategory
         }
         if let c = comment, !c.isEmpty {
             fields["Comment"] = c
@@ -239,6 +255,12 @@ final class ValidationViewModel: ObservableObject {
         var fields = rec.fields
         fields["Result"] = "Validated (Recommended)"
 
+        if fields["Category"]?.isEmpty ?? true {
+            let txCategory = fields["Transaction Category"] ?? ""
+            let proofCategory = fields["Proof Category"] ?? ""
+            fields["Category"] = !txCategory.isEmpty ? txCategory : proofCategory
+        }
+
         // Remove matching items from unmatched lists by business name
         let txName = rec.value(for: "Transaction Business Name")
         let proofName = rec.value(for: "Proof Business Name")
@@ -250,6 +272,17 @@ final class ValidationViewModel: ObservableObject {
         }
 
         validatedRows.append(ResultRow(fields: fields))
+        persistSessionStateIfPossible()
+    }
+
+    /// Update category for a validated match row and persist changes.
+    func updateValidatedCategory(for rowId: UUID, category: String) {
+        guard let idx = validatedRows.firstIndex(where: { $0.id == rowId }) else { return }
+        var fields = validatedRows[idx].fields
+        fields["Category"] = category
+        fields["Transaction Category"] = category
+        fields["Proof Category"] = category
+        validatedRows[idx] = ResultRow(id: rowId, fields: fields)
         persistSessionStateIfPossible()
     }
 
@@ -309,6 +342,14 @@ final class ValidationViewModel: ObservableObject {
         fields["Proof Business Name"] = proofBiz
         fields["Proof Total"] = proofTotal
         fields["Proof Date"] = proofDate
+        let txCategory = tx.value(for: "Category").isEmpty ? tx.value(for: "category") : tx.value(for: "Category")
+        let proofCategory = proof.value(for: "Category").isEmpty ? proof.value(for: "category") : proof.value(for: "Category")
+        let unifiedCategory = !txCategory.isEmpty ? txCategory : proofCategory
+        if !unifiedCategory.isEmpty {
+            fields["Category"] = unifiedCategory
+            fields["Transaction Category"] = unifiedCategory
+            fields["Proof Category"] = unifiedCategory
+        }
         fields["Result"] = "Manually Matched"
         fields["Reason"] = "Matched manually by user"
 
@@ -363,5 +404,13 @@ final class ValidationViewModel: ObservableObject {
         proofFiles = []
         errorMessage = nil
         currentSessionId = nil
+    }
+
+    private func parseCurrencyAmount(_ raw: String) -> Double? {
+        let cleaned = raw
+            .replacingOccurrences(of: "$", with: "")
+            .replacingOccurrences(of: ",", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        return Double(cleaned)
     }
 }

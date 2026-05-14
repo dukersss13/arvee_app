@@ -10,60 +10,62 @@ struct ChatBubble: View {
     var body: some View {
         VStack(alignment: isUser ? .trailing : .leading, spacing: 10) {
             // Text bubble
-            HStack(alignment: .bottom, spacing: 8) {
-                if isUser { Spacer(minLength: 52) }
-
-                if !isUser {
+            if isPendingAssistantIndicator {
+                HStack(alignment: .center, spacing: 8) {
                     avatarView(symbol: "sparkles", tint: .arveeTeal)
+                    TypingIndicator()
+                    Spacer(minLength: 52)
                 }
+            } else {
+                HStack(alignment: .bottom, spacing: 8) {
+                    if isUser { Spacer(minLength: 52) }
 
-                VStack(alignment: isUser ? .trailing : .leading, spacing: 6) {
-                    Text(isUser ? "YOU" : "ARVEE")
-                        .font(.system(size: 10, weight: .semibold, design: .rounded))
-                        .foregroundColor(.arveeInkMuted)
-                        .tracking(0.5)
-
-                    VStack(alignment: .leading, spacing: 8) {
-                        if message.isPending && message.text.isEmpty {
-                            TypingIndicator()
-                        } else {
-                            Text(message.text)
-                                .font(.system(.body, design: .rounded))
-                                .lineSpacing(2)
-                                .textSelection(.enabled)
-                        }
+                    if !isUser {
+                        avatarView(symbol: "sparkles", tint: .arveeTeal)
                     }
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 12)
-                    .foregroundColor(isUser ? .white : .arveeInk)
-                    .frame(maxWidth: 304, alignment: .leading)
-                    .background(bubbleFill)
-                    .clipShape(BubbleShape(isUser: isUser, radius: bubbleCornerRadius, tailSize: 0))
-                    .overlay(
-                        BubbleShape(isUser: isUser, radius: bubbleCornerRadius, tailSize: 0)
-                            .stroke(bubbleStroke, lineWidth: isUser ? 0.6 : 1.0)
-                    )
-                    .overlay(alignment: .top) {
-                        RoundedRectangle(cornerRadius: bubbleCornerRadius - 4)
-                            .fill(
-                                LinearGradient(
-                                    colors: [Color.white.opacity(isUser ? 0.24 : 0.46), Color.clear],
-                                    startPoint: .top,
-                                    endPoint: .center
-                                )
+
+                    VStack(alignment: isUser ? .trailing : .leading, spacing: 6) {
+                        Text(isUser ? "YOU" : "ARVEE")
+                            .font(.system(size: 10, weight: .semibold, design: .rounded))
+                            .foregroundColor(.arveeInkMuted)
+                            .tracking(0.5)
+
+                        Text(message.text)
+                            .font(.system(.body, design: .rounded))
+                            .lineSpacing(2)
+                            .textSelection(.enabled)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 12)
+                            .foregroundColor(isUser ? .white : .arveeInk)
+                            .frame(maxWidth: 304, alignment: .leading)
+                            .background(bubbleFill)
+                            .clipShape(BubbleShape(isUser: isUser, radius: bubbleCornerRadius, tailSize: 0))
+                            .overlay(
+                                BubbleShape(isUser: isUser, radius: bubbleCornerRadius, tailSize: 0)
+                                    .stroke(bubbleStroke, lineWidth: isUser ? 0.6 : 1.0)
                             )
-                            .padding(.horizontal, 2)
-                            .padding(.top, 1)
+                            .overlay(alignment: .top) {
+                                RoundedRectangle(cornerRadius: bubbleCornerRadius - 4)
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [Color.white.opacity(isUser ? 0.24 : 0.46), Color.clear],
+                                            startPoint: .top,
+                                            endPoint: .center
+                                        )
+                                    )
+                                    .padding(.horizontal, 2)
+                                    .padding(.top, 1)
+                            }
+                            .shadow(color: bubbleShadowColor, radius: isUser ? 14 : 10, x: 0, y: isUser ? 8 : 4)
+                            .shadow(color: Color.arveeInk.opacity(isUser ? 0.05 : 0.08), radius: 4, x: 0, y: 2)
                     }
-                    .shadow(color: bubbleShadowColor, radius: isUser ? 14 : 10, x: 0, y: isUser ? 8 : 4)
-                    .shadow(color: Color.arveeInk.opacity(isUser ? 0.05 : 0.08), radius: 4, x: 0, y: 2)
-                }
 
-                if isUser {
-                    avatarView(symbol: "person.fill", tint: .arveeCoral)
-                }
+                    if isUser {
+                        avatarView(symbol: "person.fill", tint: .arveeCoral)
+                    }
 
-                if !isUser { Spacer(minLength: 52) }
+                    if !isUser { Spacer(minLength: 52) }
+                }
             }
 
             // Chart (assistant only)
@@ -169,6 +171,10 @@ struct ChatBubble: View {
 
     private var bubbleShadowColor: Color {
         isUser ? Color.arveeTeal.opacity(0.24) : Color.arveeInk.opacity(0.10)
+    }
+
+    private var isPendingAssistantIndicator: Bool {
+        !isUser && message.isPending && message.text.isEmpty
     }
 }
 

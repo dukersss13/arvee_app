@@ -140,7 +140,14 @@ struct ValidationView: View {
                         })
                     ) {
                         ForEach(viewModel.validatedRows) { row in
-                            ResultCardView(row: row)
+                            ResultCardView(
+                                row: row,
+                                categoryOptions: availableCategoryOptions,
+                                isCategoryEditable: true,
+                                onCategoryChange: { newCategory in
+                                    viewModel.updateValidatedCategory(for: row.id, category: newCategory)
+                                }
+                            )
                         }
                     }
 
@@ -315,6 +322,23 @@ struct ValidationView: View {
         .arveePremiumGlassCard(accent: accentColor, cornerRadius: 14)
     }
 
+    private var availableCategoryOptions: [String] {
+        var collected: Set<String> = []
+        let allRows = viewModel.validatedRows + viewModel.discrepancies + viewModel.recommendations + viewModel.unmatchedTransactions + viewModel.unmatchedProofs
+        let keys = ["Category", "category", "Transaction Category", "Proof Category"]
+
+        for row in allRows {
+            for key in keys {
+                let value = row.value(for: key).trimmingCharacters(in: .whitespacesAndNewlines)
+                if !value.isEmpty {
+                    collected.insert(value)
+                }
+            }
+        }
+
+        return collected.sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+    }
+
     // MARK: - Collapsible Section
 
     @ViewBuilder
@@ -418,6 +442,9 @@ struct ValidationView: View {
 /// Compact card for displaying a single result row (validated, unmatched, etc.)
 struct ResultCardView: View {
     let row: ResultRow
+    var categoryOptions: [String] = []
+    var isCategoryEditable: Bool = false
+    var onCategoryChange: ((String) -> Void)? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -452,9 +479,6 @@ struct ResultCardView: View {
                 Text(row.value(for: "Transaction Date"))
                     .font(.system(size: scaledResultsFont(12.1), weight: .regular, design: .rounded))
                     .foregroundColor(.arveeInkMuted)
-                if let txCategory = matchedCategory(primary: "Transaction Category", fallback: "Category") {
-                    categoryChip(txCategory)
-                }
                 Text(row.value(for: "Transaction Total"))
                     .font(.system(size: scaledResultsFont(13.2), weight: .bold, design: .rounded).monospacedDigit())
                     .foregroundColor(.arveeInk)
@@ -474,12 +498,38 @@ struct ResultCardView: View {
                 Text(row.value(for: "Proof Date"))
                     .font(.system(size: scaledResultsFont(12.1), weight: .regular, design: .rounded))
                     .foregroundColor(.arveeInkMuted)
-                if let proofCategory = matchedCategory(primary: "Proof Category", fallback: "Category") {
-                    categoryChip(proofCategory)
-                }
                 Text(row.value(for: "Proof Total"))
                     .font(.system(size: scaledResultsFont(13.2), weight: .bold, design: .rounded).monospacedDigit())
                     .foregroundColor(.arveeInk)
+            }
+
+            if let selectedCategory = unifiedMatchedCategory {
+                HStack {
+                    Spacer()
+                    if isCategoryEditable {
+                        Menu {
+                            ForEach(editableCategoryOptions(for: selectedCategory), id: \.self) { option in
+                                Button(option) {
+                                    onCategoryChange?(option)
+                                }
+                            }
+                        } label: {
+                            HStack(spacing: 4) {
+                                Text(selectedCategory)
+                                Image(systemName: "chevron.down")
+                                    .font(.system(size: scaledResultsFont(9), weight: .semibold))
+                            }
+                            .font(.system(size: scaledResultsFont(10), weight: .medium, design: .rounded))
+                            .foregroundColor(.arveeTeal)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Color.arveeTealSoft)
+                            .cornerRadius(4)
+                        }
+                    } else {
+                        categoryChip(selectedCategory)
+                    }
+                }
             }
 
             // Status / Reason
@@ -500,6 +550,24 @@ struct ResultCardView: View {
         }
         let fallbackValue = row.value(for: fallback)
         return fallbackValue.isEmpty ? nil : fallbackValue
+    }
+
+    private var unifiedMatchedCategory: String? {
+        if let primary = matchedCategory(primary: "Category", fallback: "Transaction Category") {
+            return primary
+        }
+        return matchedCategory(primary: "Proof Category", fallback: "")
+    }
+
+    private func editableCategoryOptions(for selected: String) -> [String] {
+        var options = categoryOptions
+        if !options.contains(where: { $0.caseInsensitiveCompare(selected) == .orderedSame }) {
+            options.append(selected)
+        }
+        if options.isEmpty {
+            options = [selected]
+        }
+        return options.sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
     }
 
     private func categoryChip(_ value: String) -> some View {

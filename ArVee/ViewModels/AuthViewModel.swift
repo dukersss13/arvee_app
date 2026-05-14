@@ -56,10 +56,15 @@ final class AuthViewModel: ObservableObject {
             errorMessage = "Password must be at least 8 characters."
             return
         }
-        let confirmPwd = confirmPassword.trimmingCharacters(in: .whitespacesAndNewlines)
-        if mode == .signup && pwd != confirmPwd {
-            errorMessage = "Passwords do not match."
-            return
+        if mode == .signup {
+            if let complexityError = signupPasswordComplexityMessage(for: pwd) {
+                errorMessage = complexityError
+                return
+            }
+            if !doesSignupPasswordMatch(password: pwd) {
+                errorMessage = "Passwords do not match."
+                return
+            }
         }
 
         isLoading = true
@@ -102,6 +107,24 @@ final class AuthViewModel: ObservableObject {
         } catch {
             errorMessage = error.localizedDescription
         }
+    }
+
+    private func doesSignupPasswordMatch(password: String) -> Bool {
+        let confirmPwd = confirmPassword.trimmingCharacters(in: .whitespacesAndNewlines)
+        return !confirmPwd.isEmpty && password == confirmPwd
+    }
+
+    private func signupPasswordComplexityMessage(for password: String) -> String? {
+        let hasUppercase = password.rangeOfCharacter(from: .uppercaseLetters) != nil
+        let hasNumber = password.rangeOfCharacter(from: .decimalDigits) != nil
+        let hasSpecial = password.rangeOfCharacter(
+            from: CharacterSet.punctuationCharacters.union(.symbols)
+        ) != nil
+
+        guard hasUppercase, hasNumber, hasSpecial else {
+            return "Password must include at least 1 capital letter, 1 number, and 1 special character."
+        }
+        return nil
     }
 
     func logout() {

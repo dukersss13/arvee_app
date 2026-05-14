@@ -14,6 +14,14 @@ struct DiscrepancyCardView: View {
     @State private var adjustedAmount: String = ""
     @State private var comment: String = ""
 
+    private var canAcceptMatch: Bool {
+        guard let adjusted = parseAmount(adjustedAmount),
+              let proof = parseAmount(row.value(for: "Proof Total")) else {
+            return false
+        }
+        return abs(adjusted - proof) < 0.0001
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             // Transaction side
@@ -85,7 +93,7 @@ struct DiscrepancyCardView: View {
 
             // Accept button
             Button {
-                let amount = Double(adjustedAmount.trimmingCharacters(in: .whitespaces))
+                let amount = parseAmount(adjustedAmount)
                 let trimmedComment = comment.trimmingCharacters(in: .whitespaces)
                 onAccept(amount, trimmedComment.isEmpty ? nil : trimmedComment)
             } label: {
@@ -94,9 +102,16 @@ struct DiscrepancyCardView: View {
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 10)
-                    .background(Color.arveeTeal)
+                        .background(canAcceptMatch ? Color.arveeTeal : Color.arveeInkMuted)
                     .cornerRadius(10)
             }
+                    .disabled(!canAcceptMatch)
+
+                    if !canAcceptMatch {
+                    Text("Adjusted amount must equal proof total before accepting.")
+                        .font(.system(size: scaledDiscrepancyFont(10), weight: .regular, design: .rounded))
+                        .foregroundColor(.arveeCoral)
+                    }
         }
         .padding(14)
         .arveePremiumGlassCard(accent: .arveeCoral, cornerRadius: 12)
@@ -122,5 +137,13 @@ struct DiscrepancyCardView: View {
                 .foregroundColor(.arveeInk)
                 .lineLimit(1)
         }
+    }
+
+    private func parseAmount(_ raw: String) -> Double? {
+        let cleaned = raw
+            .replacingOccurrences(of: "$", with: "")
+            .replacingOccurrences(of: ",", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        return Double(cleaned)
     }
 }

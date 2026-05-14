@@ -184,23 +184,53 @@ struct AuthView: View {
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
                         .keyboardType(.emailAddress)
+                        .submitLabel(.next)
+                        .onSubmit {
+                            focusedField = .password
+                        }
                         .focused($focusedField, equals: .email)
                 }
 
                 authField(icon: "lock.fill", placeholder: "Password") {
                     SecureField("Password", text: $viewModel.password)
+                        .submitLabel(viewModel.mode == .signup ? .next : .done)
+                        .onSubmit {
+                            if viewModel.mode == .signup {
+                                focusedField = .confirmPassword
+                            } else {
+                                focusedField = nil
+                            }
+                        }
                         .focused($focusedField, equals: .password)
                 }
 
                 if viewModel.mode == .signup {
                     authField(icon: "lock.rotation", placeholder: "Confirm Password") {
                         SecureField("Confirm Password", text: $viewModel.confirmPassword)
+                            .submitLabel(.done)
+                            .onSubmit {
+                                focusedField = nil
+                            }
                             .focused($focusedField, equals: .confirmPassword)
                     }
                     .transition(.move(edge: .top).combined(with: .opacity))
                 }
             }
             .animation(.easeInOut(duration: 0.25), value: viewModel.mode)
+
+            if viewModel.mode == .signup {
+                HStack(alignment: .top, spacing: 8) {
+                    Image(systemName: "checkmark.shield")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(.arveeTeal)
+                        .padding(.top, 1)
+                    Text("Password must be at least 8 characters and include 1 capital letter, 1 number, and 1 special character.")
+                        .font(.system(.caption, design: .rounded))
+                        .foregroundColor(.arveeInkMuted)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .transition(.opacity)
+            }
 
             // Error message
             if let error = viewModel.errorMessage {

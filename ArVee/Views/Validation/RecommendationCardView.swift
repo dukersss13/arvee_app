@@ -40,6 +40,9 @@ struct RecommendationCardView: View {
                 Spacer()
                 fieldColumn("Total", row.value(for: "Transaction Total"))
             }
+            if let category = recommendationCategory(primary: "Transaction Category", fallback: "Category") {
+                categoryRow(label: "Category", value: category)
+            }
 
             Divider().overlay(Color.arveeLine)
 
@@ -51,6 +54,9 @@ struct RecommendationCardView: View {
                 fieldColumn("Date", row.value(for: "Proof Date"))
                 Spacer()
                 fieldColumn("Total", row.value(for: "Proof Total"))
+            }
+            if let category = recommendationCategory(primary: "Proof Category", fallback: "Category") {
+                categoryRow(label: "Category", value: category)
             }
 
             // Reason / confidence
@@ -98,5 +104,29 @@ struct RecommendationCardView: View {
                 .foregroundColor(.arveeInk)
                 .lineLimit(1)
         }
+    }
+
+    private func categoryRow(label: String, value: String) -> some View {
+        HStack(spacing: 6) {
+            Text(label)
+                .font(.system(size: scaledRecommendationFont(9), weight: .semibold, design: .rounded))
+                .foregroundColor(.arveeInkMuted)
+            Text(value)
+                .font(.system(size: scaledRecommendationFont(10), weight: .medium, design: .rounded))
+                .foregroundColor(.arveeTeal)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2)
+                .background(Color.arveeTealSoft)
+                .cornerRadius(4)
+        }
+    }
+
+    private func recommendationCategory(primary: String, fallback: String) -> String? {
+        let primaryValue = row.value(for: primary)
+        if !primaryValue.isEmpty {
+            return primaryValue
+        }
+        let fallbackValue = row.value(for: fallback)
+        return fallbackValue.isEmpty ? nil : fallbackValue
     }
 }
