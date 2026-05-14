@@ -134,67 +134,75 @@ struct ValidationView: View {
                         }
                     }
 
-                    // Discrepancies section
-                    collapsibleSection(
-                        section: .discrepancies,
-                        title: "Discrepancies",
-                        count: viewModel.discrepancies.count,
-                        accentColor: .arveeCoral,
-                        icon: "exclamationmark.triangle.fill"
-                    ) {
-                        ForEach(Array(viewModel.discrepancies.enumerated()), id: \.element.id) { idx, row in
-                            DiscrepancyCardView(row: row) { adjustedAmount, comment in
-                                viewModel.acceptDiscrepancy(at: idx, adjustedAmount: adjustedAmount, comment: comment)
+                    if !viewModel.discrepancies.isEmpty {
+                        // Discrepancies section
+                        collapsibleSection(
+                            section: .discrepancies,
+                            title: "Discrepancies",
+                            count: viewModel.discrepancies.count,
+                            accentColor: .arveeCoral,
+                            icon: "exclamationmark.triangle.fill"
+                        ) {
+                            ForEach(Array(viewModel.discrepancies.enumerated()), id: \.element.id) { idx, row in
+                                DiscrepancyCardView(row: row) { adjustedAmount, comment in
+                                    viewModel.acceptDiscrepancy(at: idx, adjustedAmount: adjustedAmount, comment: comment)
+                                }
                             }
                         }
                     }
 
-                    // Unmatched Transactions section
-                    collapsibleSection(
-                        section: .unmatchedTx,
-                        title: "Unmatched Transactions",
-                        count: viewModel.unmatchedTransactions.count,
-                        accentColor: .arveeInkMuted,
-                        icon: "doc.questionmark",
-                        action: viewModel.unmatchedTransactions.isEmpty ? nil : ("Manual Match", {
-                            showManualMatch = true
-                        })
-                    ) {
-                        ForEach(viewModel.unmatchedTransactions) { row in
-                            ResultCardView(row: row)
+                    if !viewModel.unmatchedTransactions.isEmpty {
+                        // Unmatched Transactions section
+                        collapsibleSection(
+                            section: .unmatchedTx,
+                            title: "Unmatched Transactions",
+                            count: viewModel.unmatchedTransactions.count,
+                            accentColor: .arveeInkMuted,
+                            icon: "doc.questionmark",
+                            action: ("Manual Match", {
+                                showManualMatch = true
+                            })
+                        ) {
+                            ForEach(viewModel.unmatchedTransactions) { row in
+                                ResultCardView(row: row)
+                            }
                         }
                     }
 
-                    // Unmatched Proofs section
-                    collapsibleSection(
-                        section: .unmatchedProofs,
-                        title: "Unmatched Proofs",
-                        count: viewModel.unmatchedProofs.count,
-                        accentColor: .arveeInkMuted,
-                        icon: "photo.on.rectangle",
-                        action: viewModel.unmatchedProofs.isEmpty ? nil : ("Manual Match", {
-                            showManualMatch = true
-                        })
-                    ) {
-                        ForEach(viewModel.unmatchedProofs) { row in
-                            ResultCardView(row: row)
+                    if !viewModel.unmatchedProofs.isEmpty {
+                        // Unmatched Proofs section
+                        collapsibleSection(
+                            section: .unmatchedProofs,
+                            title: "Unmatched Proofs",
+                            count: viewModel.unmatchedProofs.count,
+                            accentColor: .arveeInkMuted,
+                            icon: "photo.on.rectangle",
+                            action: ("Manual Match", {
+                                showManualMatch = true
+                            })
+                        ) {
+                            ForEach(viewModel.unmatchedProofs) { row in
+                                ResultCardView(row: row)
+                            }
                         }
                     }
 
-                    // Recommendations section
-                    collapsibleSection(
-                        section: .recommendations,
-                        title: "Recommendations",
-                        count: viewModel.recommendations.count,
-                        accentColor: .arveeTeal,
-                        icon: "sparkles",
-                        action: viewModel.recommendations.isEmpty ? nil : ("Accept All", {
-                            viewModel.acceptAllRecommendations()
-                        })
-                    ) {
-                        ForEach(Array(viewModel.recommendations.enumerated()), id: \.element.id) { idx, row in
-                            RecommendationCardView(row: row) {
-                                viewModel.acceptRecommendation(at: idx)
+                    if !viewModel.recommendations.isEmpty {
+                        // Recommendations section
+                        collapsibleSection(
+                            section: .recommendations,
+                            title: "Recommendations",
+                            count: viewModel.recommendations.count,
+                            accentColor: .arveeTeal,
+                            icon: "sparkles",
+                            action: ("Accept All", {
+                                viewModel.acceptAllRecommendations()
+                            })
+                        ) {
+                            ForEach(Array(viewModel.recommendations.enumerated()), id: \.element.id) { idx, row in
+                                RecommendationCardView(row: row) {
+                                    viewModel.acceptRecommendation(at: idx)
+                                }
                             }
                         }
                     }
@@ -239,7 +247,7 @@ struct ValidationView: View {
                     .foregroundColor(accentColor.opacity(0.6))
             }
             Text("\(value)")
-                .font(.system(size: 36, weight: .bold, design: .rounded))
+                .font(.system(size: 32, weight: .bold, design: .rounded))
                 .foregroundColor(.arveeInk)
                 .contentTransition(.numericText())
         }

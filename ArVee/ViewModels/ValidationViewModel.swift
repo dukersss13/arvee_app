@@ -27,6 +27,7 @@ final class ValidationViewModel: ObservableObject {
     @Published var proofFiles: [FilePayload] = []
 
     private let api = APIService.shared
+    private var currentSessionId: String?
 
     var hasResults: Bool { !validatedRows.isEmpty || !discrepancies.isEmpty || !unmatchedTransactions.isEmpty || !unmatchedProofs.isEmpty || !recommendations.isEmpty }
 
@@ -49,6 +50,7 @@ final class ValidationViewModel: ObservableObject {
     func validate(sessionId: String) async {
         isValidating = true
         errorMessage = nil
+        currentSessionId = sessionId
         do {
             let response = try await api.validate(
                 sessionId: sessionId,
@@ -143,6 +145,7 @@ final class ValidationViewModel: ObservableObject {
         }
         row = ResultRow(fields: fields)
         validatedRows.append(row)
+        persistSessionStateIfPossible()
     }
 
     /// Accept a recommendation, moving it to validated and removing matched items from unmatched lists.
@@ -163,6 +166,7 @@ final class ValidationViewModel: ObservableObject {
         }
 
         validatedRows.append(ResultRow(fields: fields))
+        persistSessionStateIfPossible()
     }
 
     /// Accept all recommendations at once.
@@ -198,6 +202,37 @@ final class ValidationViewModel: ObservableObject {
         fields["Reason"] = "Matched manually by user"
 
         validatedRows.append(ResultRow(fields: fields))
+        persistSessionStateIfPossible()
+    }
+
+    func saveCurrentState(sessionId: String) async {
+        do {
+            try await api.saveSessionState(sessionId: sessionId, state: buildSessionStatePayload())
+        } catch {
+            // Non-blocking persistence; surface a lightweight error for diagnostics.
+            errorMessage = "Failed to sync session state: \(error.localizedDescription)"
+        }
+    }
+
+    private func persistSessionStateIfPossible() {
+        guard let sessionId = currentSessionId else { return }
+        Task { await saveCurrentState(sessionId: sessionId) }
+    }
+
+    private func buildSessionStatePayload() -> [String: Any] {
+        var payload: [String: Any] = [
+            "validatedTransactions": validatedRows.map(\.fields),
+            "discrepancies": discrepancies.map(\.fields),
+            "unmatchedTransactions": unmatchedTransactions.map(\.fields),
+            "unmatchedProofs": unmatchedProofs.map(\.fields),
+            "recommendations": recommendations.map(\.fields),
+        ]
+
+        if let summary, !summary.isEmpty {
+            payload["summary"] = summary
+        }
+
+        return payload
     }
 
     func clear() {
@@ -214,5 +249,6 @@ final class ValidationViewModel: ObservableObject {
         transactionFiles = []
         proofFiles = []
         errorMessage = nil
+        currentSessionId = nil
     }
 }
