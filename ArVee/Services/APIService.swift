@@ -174,7 +174,7 @@ final class APIService {
                     message: "Network error: \(error.localizedDescription)"
                 )
             }
-        } catch let APIError.server(statusCode, message) {
+        } catch let APIError.server(statusCode, message, _) {
             return HealthCheckResult(
                 isConnected: false,
                 message: "Backend reachable (\(statusCode)) but returned: \(message)"
@@ -605,13 +605,20 @@ final class APIService {
         guard let http = response as? HTTPURLResponse else { return }
         guard (200...299).contains(http.statusCode) else {
             let message: String
+            let errorClass: String?
             if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                let error = json["error"] as? String {
                 message = error
+                errorClass = json["errorClass"] as? String
             } else {
                 message = "Request failed with status \(http.statusCode)"
+                errorClass = nil
             }
-            throw APIError.server(statusCode: http.statusCode, message: message)
+            throw APIError.server(
+                statusCode: http.statusCode,
+                message: message,
+                errorClass: errorClass
+            )
         }
     }
 
@@ -639,12 +646,21 @@ struct FilePayload {
 }
 
 enum APIError: LocalizedError {
-    case server(statusCode: Int, message: String)
+    case server(statusCode: Int, message: String, errorClass: String?)
     case invalidURL(String)
+
+    var backendErrorClass: String? {
+        switch self {
+        case .server(_, _, let errorClass):
+            return errorClass
+        case .invalidURL:
+            return nil
+        }
+    }
 
     var errorDescription: String? {
         switch self {
-        case .server(_, let message):
+        case .server(_, let message, _):
             return message
         case .invalidURL(let url):
             return "Invalid API URL: \(url)"

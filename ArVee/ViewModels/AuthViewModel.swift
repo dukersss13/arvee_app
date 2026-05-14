@@ -81,8 +81,12 @@ final class AuthViewModel: ObservableObject {
             errorMessage = error.localizedDescription
         } catch let error as APIError {
             switch error {
-            case .server(_, let message):
-                errorMessage = message
+            case .server(_, let message, let errorClass):
+                errorMessage = userFacingAuthMessage(
+                    defaultMessage: message,
+                    errorClass: errorClass,
+                    forGoogle: false
+                )
             case .invalidURL:
                 errorMessage = "Could not connect to the server. Check API Base URL in Settings."
             }
@@ -91,7 +95,7 @@ final class AuthViewModel: ObservableObject {
             case .cannotConnectToHost, .dnsLookupFailed, .cannotFindHost, .notConnectedToInternet:
                 errorMessage = "Could not connect to the server. Check API Base URL in Settings."
             case .timedOut:
-                errorMessage = "Connection timed out. Please try again."
+                errorMessage = "The backend took too long to respond. Please try again shortly."
             default:
                 errorMessage = error.localizedDescription
             }
@@ -136,8 +140,12 @@ final class AuthViewModel: ObservableObject {
             errorMessage = error.localizedDescription
         } catch let error as APIError {
             switch error {
-            case .server(_, let message):
-                errorMessage = message
+            case .server(_, let message, let errorClass):
+                errorMessage = userFacingAuthMessage(
+                    defaultMessage: message,
+                    errorClass: errorClass,
+                    forGoogle: true
+                )
             case .invalidURL:
                 errorMessage = "Google sign-in could not reach the backend. Check API Base URL in Settings."
             }
@@ -147,6 +155,29 @@ final class AuthViewModel: ObservableObject {
             errorMessage = "Google sign-in was canceled."
         } catch {
             errorMessage = error.localizedDescription
+        }
+    }
+
+    private func userFacingAuthMessage(defaultMessage: String, errorClass: String?, forGoogle: Bool) -> String {
+        let normalizedClass = errorClass?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() ?? ""
+        switch normalizedClass {
+        case "db_timeout", "database_error", "schema_mismatch":
+            return "Backend authentication is temporarily unavailable. Please try again in a moment."
+        case "oauth_not_configured":
+            return "Google sign-in is not configured on the backend yet."
+        case "oauth_verify_failure":
+            return "Google could not verify your sign-in token. Please try again."
+        case "invalid_credentials":
+            return "Invalid email or password."
+        case "email_conflict":
+            return "An account with this email already exists. Try logging in instead."
+        case "validation_error":
+            return defaultMessage
+        default:
+            if forGoogle {
+                return "Google sign-in failed: \(defaultMessage)"
+            }
+            return defaultMessage
         }
     }
 
