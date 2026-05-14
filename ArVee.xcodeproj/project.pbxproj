@@ -35,6 +35,10 @@
 		A10027 /* DiscrepancyCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10027 /* DiscrepancyCardView.swift */; };
 		A10028 /* RecommendationCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10028 /* RecommendationCardView.swift */; };
 		A10029 /* ManualMatchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10029 /* ManualMatchView.swift */; };
+		A10031 /* Auth.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10031 /* Auth.swift */; };
+		A10032 /* AuthViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10032 /* AuthViewModel.swift */; };
+		A10033 /* AuthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10033 /* AuthView.swift */; };
+		A10034 /* ValidationSSEClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10034 /* ValidationSSEClient.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -67,6 +71,10 @@
 		B10028 /* RecommendationCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecommendationCardView.swift; sourceTree = "<group>"; };
 		B10029 /* ManualMatchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManualMatchView.swift; sourceTree = "<group>"; };
 		B10030 /* ArVee.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ArVee.entitlements; sourceTree = "<group>"; };
+		B10031 /* Auth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Auth.swift; sourceTree = "<group>"; };
+		B10032 /* AuthViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthViewModel.swift; sourceTree = "<group>"; };
+		B10033 /* AuthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthView.swift; sourceTree = "<group>"; };
+		B10034 /* ValidationSSEClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ValidationSSEClient.swift; sourceTree = "<group>"; };
 		C10001 /* ArVee.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ArVee.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -108,6 +116,7 @@
 			isa = PBXGroup;
 			children = (
 				B10002 /* AnyCodable.swift */,
+				B10031 /* Auth.swift */,
 				B10003 /* Session.swift */,
 				B10004 /* ValidationResult.swift */,
 				B10005 /* ChatMessage.swift */,
@@ -121,6 +130,7 @@
 			children = (
 				B10007 /* APIService.swift */,
 				B10008 /* SSEClient.swift */,
+				B10034 /* ValidationSSEClient.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -128,6 +138,7 @@
 		E10005 /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
+				B10032 /* AuthViewModel.swift */,
 				B10009 /* SessionViewModel.swift */,
 				B10010 /* ValidationViewModel.swift */,
 				B10011 /* ChatViewModel.swift */,
@@ -140,6 +151,7 @@
 			children = (
 				B10012 /* MainTabView.swift */,
 				B10013 /* SettingsView.swift */,
+				E10014 /* Auth */,
 				E10007 /* Components */,
 				E10013 /* Home */,
 				E10012 /* Upload */,
@@ -203,6 +215,14 @@
 				B10026 /* HomeView.swift */,
 			);
 			path = Home;
+			sourceTree = "<group>";
+		};
+		E10014 /* Auth */ = {
+			isa = PBXGroup;
+			children = (
+				B10033 /* AuthView.swift */,
+			);
+			path = Auth;
 			sourceTree = "<group>";
 		};
 		E10099 /* Products */ = {
@@ -308,6 +328,10 @@
 				A10026 /* HomeView.swift in Sources */,
 				A10027 /* DiscrepancyCardView.swift in Sources */,
 				A10028 /* RecommendationCardView.swift in Sources */,
+				A10031 /* Auth.swift in Sources */,
+				A10032 /* AuthViewModel.swift in Sources */,
+				A10033 /* AuthView.swift in Sources */,
+				A10034 /* ValidationSSEClient.swift in Sources */,
 				A10029 /* ManualMatchView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
