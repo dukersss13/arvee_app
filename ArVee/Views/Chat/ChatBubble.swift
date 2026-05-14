@@ -22,28 +22,13 @@ struct ChatBubble: View {
                 }
                 .padding(12)
                 .foregroundColor(isUser ? .white : .arveeInk)
-                .background(
-                    Group {
-                        if isUser {
-                            Color.arveeTealGradient
-                        } else {
-                            LinearGradient(
-                                colors: [Color.arveePaper, Color.arveePaper],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        }
-                    }
-                )
+                .background(isUser ? AnyShapeStyle(Color.arveeTealGradient) : AnyShapeStyle(Color.white))
                 .clipShape(BubbleShape(isUser: isUser))
                 .overlay(
-                    Group {
-                        if !isUser {
-                            BubbleShape(isUser: isUser)
-                                .stroke(Color.arveeLine, lineWidth: 0.5)
-                        }
-                    }
+                    BubbleShape(isUser: isUser)
+                        .stroke(isUser ? Color.clear : Color.arveeLine, lineWidth: 0.5)
                 )
+                .shadow(color: isUser ? Color.clear : Color.arveeInk.opacity(0.06), radius: 5, x: 0, y: 2)
 
                 if !isUser { Spacer(minLength: 60) }
             }

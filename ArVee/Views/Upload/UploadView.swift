@@ -11,6 +11,15 @@ struct UploadView: View {
     @State private var loadSessionId = ""
     @State private var showTxDocPicker = false
     @State private var showProofDocPicker = false
+    @State private var hourglassRotation: Double = 0
+    @State private var bufferingTextIndex = 0
+
+    private let bufferingTexts = [
+        "Matching transactions and proofs...",
+        "Checking totals and dates...",
+        "Preparing validation suggestions...",
+        "Almost there, finalizing results...",
+    ]
 
     private var currentStep: StepState {
         if validationVM.hasResults { return .complete }
@@ -264,33 +273,36 @@ struct UploadView: View {
 
     private var validatingOverlay: some View {
         VStack(spacing: 14) {
-            HStack {
-                Text("Validation in progress")
-                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                    .foregroundColor(.arveeInk)
-                Spacer()
-                if let percent = validationVM.validationPercent {
-                    Text("\(max(0, min(percent, 100)))%")
-                        .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                        .foregroundColor(.arveeTeal)
+            Image(systemName: "hourglass")
+                .font(.system(size: 34, weight: .semibold))
+                .foregroundColor(.arveeTeal)
+                .rotationEffect(.degrees(hourglassRotation))
+                .onAppear {
+                    hourglassRotation = 0
+                    withAnimation(.linear(duration: 1.2).repeatForever(autoreverses: false)) {
+                        hourglassRotation = 360
+                    }
                 }
-            }
 
-            ProgressView(
-                value: Double(max(0, min(validationVM.validationPercent ?? 0, 100))),
-                total: 100
-            )
-            .tint(.arveeTeal)
+            Text("Validation in progress")
+                .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                .foregroundColor(.arveeInk)
 
-            Text(validationVM.validationStage ?? "Validating your files...")
+            Text(validationVM.validationStage ?? bufferingTexts[bufferingTextIndex])
                 .font(.system(.subheadline, design: .rounded).weight(.medium))
                 .foregroundColor(.arveeInk)
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(maxWidth: .infinity, alignment: .center)
+                .multilineTextAlignment(.center)
+                .animation(.easeInOut(duration: 0.25), value: bufferingTextIndex)
+                .onReceive(Timer.publish(every: 1.7, on: .main, in: .common).autoconnect()) { _ in
+                    bufferingTextIndex = (bufferingTextIndex + 1) % bufferingTexts.count
+                }
 
             Text("This may take a moment while we process your documents")
                 .font(.caption)
                 .foregroundColor(.arveeInkMuted)
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(maxWidth: .infinity, alignment: .center)
+                .multilineTextAlignment(.center)
         }
         .padding(24)
         .frame(maxWidth: .infinity)
