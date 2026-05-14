@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct MainTabView: View {
+    @StateObject private var authVM = AuthViewModel()
     @StateObject private var sessionVM = SessionViewModel()
     @StateObject private var validationVM = ValidationViewModel()
     @StateObject private var chatVM = ChatViewModel()
@@ -8,6 +9,30 @@ struct MainTabView: View {
     @State private var resultsScrollTarget: ResultsSection?
 
     var body: some View {
+        Group {
+            if authVM.isAuthenticated {
+                contentTabs
+            } else {
+                AuthView(viewModel: authVM)
+            }
+        }
+        .onChange(of: authVM.isAuthenticated) { _, isAuthed in
+            if !isAuthed {
+                sessionVM.clear()
+                validationVM.clear()
+                chatVM.clear()
+                selectedTab = 0
+            }
+        }
+        .task {
+            authVM.refreshAuthState()
+            chatVM.setStateSyncHandler { sessionId in
+                await validationVM.saveCurrentState(sessionId: sessionId)
+            }
+        }
+    }
+
+    private var contentTabs: some View {
         TabView(selection: $selectedTab) {
             HomeView(
                 sessionVM: sessionVM,
@@ -49,7 +74,7 @@ struct MainTabView: View {
             }
             .tag(3)
 
-            SettingsView()
+            SettingsView(authViewModel: authVM)
                 .tabItem {
                     Label("Settings", systemImage: "gear")
                 }
@@ -58,11 +83,6 @@ struct MainTabView: View {
         .tint(.arveeTeal)
         .toolbarBackground(Color.arveePaper, for: .tabBar)
         .toolbarBackground(.visible, for: .tabBar)
-        .task {
-            chatVM.setStateSyncHandler { sessionId in
-                await validationVM.saveCurrentState(sessionId: sessionId)
-            }
-        }
     }
 }
 

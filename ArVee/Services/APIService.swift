@@ -5,11 +5,30 @@ import Darwin
 final class APIService {
     static let shared = APIService()
 
+    private enum StorageKeys {
+        static let apiBaseURL = "apiBaseURL"
+        static let authToken = "authToken"
+        static let authEmail = "authEmail"
+    }
+
     /// Base URL for the Flask backend. Update this to your server address.
-    var baseURL = "http://192.168.4.54:7860" {
+    var baseURL = "https://arvee-backend-5hqe7uiuka-uc.a.run.app" {
         didSet {
             baseURL = Self.normalizedBaseURL(baseURL)
         }
+    }
+
+    var authToken: String? {
+        UserDefaults.standard.string(forKey: StorageKeys.authToken)
+    }
+
+    var authenticatedEmail: String? {
+        UserDefaults.standard.string(forKey: StorageKeys.authEmail)
+    }
+
+    var isAuthenticated: Bool {
+        guard let token = authToken else { return false }
+        return !token.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
     private let session: URLSession
@@ -31,7 +50,29 @@ final class APIService {
         self.session = URLSession(configuration: config)
         self.discoverySession = URLSession(configuration: discoveryConfig)
         self.decoder = JSONDecoder()
+        if let saved = UserDefaults.standard.string(forKey: StorageKeys.apiBaseURL), !saved.isEmpty {
+            self.baseURL = saved
+        }
         self.baseURL = Self.normalizedBaseURL(self.baseURL)
+    }
+
+    func setAuthSession(token: String, email: String) {
+        UserDefaults.standard.set(token, forKey: StorageKeys.authToken)
+        UserDefaults.standard.set(email, forKey: StorageKeys.authEmail)
+    }
+
+    func clearAuthSession() {
+        UserDefaults.standard.removeObject(forKey: StorageKeys.authToken)
+        UserDefaults.standard.removeObject(forKey: StorageKeys.authEmail)
+    }
+
+    private func applyAuthHeaders(_ request: inout URLRequest) {
+        if let token = authToken, !token.isEmpty {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+        if let email = authenticatedEmail, !email.isEmpty {
+            request.setValue(email, forHTTPHeaderField: "X-User-Id")
+        }
     }
 
     static func normalizedBaseURL(_ raw: String) -> String {
@@ -144,6 +185,31 @@ final class APIService {
         return response.sessionId
     }
 
+    // MARK: - Auth
+
+    func signUp(email: String, password: String) async throws -> AuthResponse {
+        let payload = ["email": email, "password": password]
+        let body = try JSONSerialization.data(withJSONObject: payload)
+        let data = try await post(path: "/api/auth/signup", body: body)
+        let response = try decoder.decode(AuthResponse.self, from: data)
+        setAuthSession(token: response.token, email: response.user.email)
+        return response
+    }
+
+    func login(email: String, password: String) async throws -> AuthResponse {
+        let payload = ["email": email, "password": password]
+        let body = try JSONSerialization.data(withJSONObject: payload)
+        let data = try await post(path: "/api/auth/login", body: body)
+        let response = try decoder.decode(AuthResponse.self, from: data)
+        setAuthSession(token: response.token, email: response.user.email)
+        return response
+    }
+
+    func getCurrentUser() async throws -> AuthMeResponse {
+        let data = try await get(path: "/api/auth/me")
+        return try decoder.decode(AuthMeResponse.self, from: data)
+    }
+
     func loadSessionInputs(sessionId: String) async throws -> SessionInputsResponse {
         let data = try await get(path: "/api/session/\(sessionId)")
         return try decoder.decode(SessionInputsResponse.self, from: data)
@@ -184,6 +250,7 @@ final class APIService {
         var request = URLRequest(url: URL(string: "\(baseURL)/api/validate")!)
         request.httpMethod = "POST"
         request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+        applyAuthHeaders(&request)
         request.httpBody = body
 
         let (data, response) = try await session.data(for: request)
@@ -195,7 +262,7 @@ final class APIService {
         sessionId: String,
         transactionFiles: [FilePayload],
         proofFiles: [FilePayload]
-    ) -> (url: URL, body: Data, contentType: String) {
+    ) -> (url: URL, body: Data, contentType: String, headers: [String: String]) {
         let boundary = UUID().uuidString
         var body = Data()
 
@@ -210,10 +277,19 @@ final class APIService {
 
         body.append("--\(boundary)--\r\n".data(using: .utf8)!)
 
+        var headers: [String: String] = [:]
+        if let token = authToken, !token.isEmpty {
+            headers["Authorization"] = "Bearer \(token)"
+        }
+        if let email = authenticatedEmail, !email.isEmpty {
+            headers["X-User-Id"] = email
+        }
+
         return (
             url: URL(string: "\(baseURL)/api/validate/stream")!,
             body: body,
-            contentType: "multipart/form-data; boundary=\(boundary)"
+            contentType: "multipart/form-data; boundary=\(boundary)",
+            headers: headers
         )
     }
 
@@ -226,11 +302,18 @@ final class APIService {
         return try decoder.decode(ChatAskResponse.self, from: data)
     }
 
-    func chatStreamURL(sessionId: String, message: String) -> (URL, Data) {
+    func chatStreamURL(sessionId: String, message: String) -> (URL, Data, [String: String]) {
         let url = URL(string: "\(baseURL)/api/chat/ask/stream")!
         let payload = ["sessionId": sessionId, "message": message]
         let body = try! JSONSerialization.data(withJSONObject: payload)
-        return (url, body)
+        var headers: [String: String] = [:]
+        if let token = authToken, !token.isEmpty {
+            headers["Authorization"] = "Bearer \(token)"
+        }
+        if let email = authenticatedEmail, !email.isEmpty {
+            headers["X-User-Id"] = email
+        }
+        return (url, body, headers)
     }
 
     // MARK: - Export
@@ -244,9 +327,11 @@ final class APIService {
     // MARK: - Helpers
 
     private func get(path: String) async throws -> Data {
-        let url = try makeURL(path: path)
+        var request = URLRequest(url: try makeURL(path: path))
+        request.httpMethod = "GET"
+        applyAuthHeaders(&request)
         do {
-            let (data, response) = try await session.data(from: url)
+            let (data, response) = try await session.data(for: request)
             try checkHTTPResponse(response, data: data)
             return data
         } catch {
@@ -258,8 +343,10 @@ final class APIService {
             }
 
             baseURL = discoveredURL
-            let retryURL = try makeURL(path: path)
-            let (retryData, retryResponse) = try await session.data(from: retryURL)
+            var retryRequest = URLRequest(url: try makeURL(path: path))
+            retryRequest.httpMethod = "GET"
+            applyAuthHeaders(&retryRequest)
+            let (retryData, retryResponse) = try await session.data(for: retryRequest)
             try checkHTTPResponse(retryResponse, data: retryData)
             return retryData
         }
@@ -273,6 +360,7 @@ final class APIService {
         var request = URLRequest(url: try makeURL(path: path))
         request.httpMethod = "POST"
         request.setValue(contentType, forHTTPHeaderField: "Content-Type")
+        applyAuthHeaders(&request)
         request.httpBody = body
 
         do {
@@ -291,6 +379,7 @@ final class APIService {
             var retryRequest = URLRequest(url: try makeURL(path: path))
             retryRequest.httpMethod = "POST"
             retryRequest.setValue(contentType, forHTTPHeaderField: "Content-Type")
+            applyAuthHeaders(&retryRequest)
             retryRequest.httpBody = body
             let (retryData, retryResponse) = try await session.data(for: retryRequest)
             try checkHTTPResponse(retryResponse, data: retryData)

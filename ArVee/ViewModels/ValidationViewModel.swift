@@ -138,7 +138,8 @@ final class ValidationViewModel: ObservableObject {
             client.start(
                 url: request.url,
                 body: request.body,
-                contentType: request.contentType
+                contentType: request.contentType,
+                headers: request.headers
             )
         }
     }

@@ -62,7 +62,7 @@ final class ChatViewModel: ObservableObject {
 
         startBufferingUpdates(for: assistantIndex)
 
-        let (url, body) = api.chatStreamURL(sessionId: sessionId, message: text)
+        let (url, body, headers) = api.chatStreamURL(sessionId: sessionId, message: text)
         let client = SSEClient()
         self.sseClient = client
 
@@ -152,7 +152,7 @@ final class ChatViewModel: ObservableObject {
             self.sseClient = nil
         }
 
-        client.start(url: url, body: body)
+        client.start(url: url, body: body, headers: headers)
     }
 
     func cancelStream() {

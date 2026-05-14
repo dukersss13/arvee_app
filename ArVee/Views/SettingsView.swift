@@ -1,7 +1,8 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @AppStorage("apiBaseURL") private var apiBaseURL = "http://192.168.4.54:7860"
+    @AppStorage("apiBaseURL") private var apiBaseURL = "https://arvee-backend-5hqe7uiuka-uc.a.run.app"
+    @ObservedObject var authViewModel: AuthViewModel
     @State private var isConnected: Bool? = nil
     @State private var isChecking = false
     @State private var statusMessage = "Not checked"
@@ -76,11 +77,39 @@ struct SettingsView: View {
                 }
 
                 Section {
+                    if let email = authViewModel.authenticatedEmail {
+                        HStack {
+                            Text("Signed In")
+                                .foregroundColor(.arveeInk)
+                            Spacer()
+                            Text(email)
+                                .font(.system(.caption, design: .monospaced))
+                                .foregroundColor(.arveeInkMuted)
+                                .lineLimit(1)
+                                .truncationMode(.middle)
+                        }
+                        .listRowBackground(Color.arveeSand.opacity(0.3))
+
+                        Button(role: .destructive) {
+                            authViewModel.logout()
+                        } label: {
+                            Text("Log Out")
+                        }
+                        .listRowBackground(Color.arveeSand.opacity(0.3))
+                    }
+                } header: {
+                    Text("ACCOUNT")
+                        .font(.arveeEyebrow())
+                        .foregroundColor(.arveeInkMuted)
+                        .tracking(1)
+                }
+
+                Section {
                     HStack {
                         Text("Version")
                             .foregroundColor(.arveeInk)
                         Spacer()
-                        Text("1.0.0")
+                        Text("1.1.0")
                             .foregroundColor(.arveeInkMuted)
                     }
                     .listRowBackground(Color.arveeSand.opacity(0.3))
