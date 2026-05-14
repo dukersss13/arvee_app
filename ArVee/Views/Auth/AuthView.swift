@@ -192,12 +192,16 @@ struct AuthView: View {
                 }
 
                 authField(icon: "lock.fill", placeholder: "Password") {
-                    Group {
-                        if viewModel.showPassword {
-                            TextField("Password", text: $viewModel.password)
-                        } else {
-                            SecureField("Password", text: $viewModel.password)
-                        }
+                    ZStack(alignment: .leading) {
+                        SecureField("Password", text: $viewModel.password)
+                            .opacity(viewModel.showPassword ? 0 : 1)
+                            .allowsHitTesting(!viewModel.showPassword)
+                            .disabled(viewModel.showPassword)
+
+                        TextField("Password", text: $viewModel.password)
+                            .opacity(viewModel.showPassword ? 1 : 0)
+                            .allowsHitTesting(viewModel.showPassword)
+                            .disabled(!viewModel.showPassword)
                     }
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
@@ -212,7 +216,13 @@ struct AuthView: View {
                     .focused($focusedField, equals: .password)
                 } trailing: {
                     Button {
+                        let wasFocused = focusedField == .password
                         viewModel.showPassword.toggle()
+                        if wasFocused {
+                            DispatchQueue.main.async {
+                                focusedField = .password
+                            }
+                        }
                     } label: {
                         Image(systemName: viewModel.showPassword ? "eye.slash.fill" : "eye.fill")
                             .font(.system(size: 14, weight: .semibold))
@@ -224,12 +234,16 @@ struct AuthView: View {
 
                 if viewModel.mode == .signup {
                     authField(icon: "lock.rotation", placeholder: "Confirm Password") {
-                        Group {
-                            if viewModel.showConfirmPassword {
-                                TextField("Confirm Password", text: $viewModel.confirmPassword)
-                            } else {
-                                SecureField("Confirm Password", text: $viewModel.confirmPassword)
-                            }
+                        ZStack(alignment: .leading) {
+                            SecureField("Confirm Password", text: $viewModel.confirmPassword)
+                                .opacity(viewModel.showConfirmPassword ? 0 : 1)
+                                .allowsHitTesting(!viewModel.showConfirmPassword)
+                                .disabled(viewModel.showConfirmPassword)
+
+                            TextField("Confirm Password", text: $viewModel.confirmPassword)
+                                .opacity(viewModel.showConfirmPassword ? 1 : 0)
+                                .allowsHitTesting(viewModel.showConfirmPassword)
+                                .disabled(!viewModel.showConfirmPassword)
                         }
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
@@ -240,7 +254,13 @@ struct AuthView: View {
                         .focused($focusedField, equals: .confirmPassword)
                     } trailing: {
                         Button {
+                            let wasFocused = focusedField == .confirmPassword
                             viewModel.showConfirmPassword.toggle()
+                            if wasFocused {
+                                DispatchQueue.main.async {
+                                    focusedField = .confirmPassword
+                                }
+                            }
                         } label: {
                             Image(systemName: viewModel.showConfirmPassword ? "eye.slash.fill" : "eye.fill")
                                 .font(.system(size: 14, weight: .semibold))
