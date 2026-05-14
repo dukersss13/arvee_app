@@ -69,19 +69,29 @@ final class ChatViewModel: ObservableObject {
         client.onToken = { [weak self] token in
             guard let self = self else { return }
             guard self.messages.indices.contains(assistantIndex) else { return }
-            self.stopBufferingUpdates()
-            streamedAnyToken = true
-            if self.isBufferingMessage(self.messages[assistantIndex].text) ||
-                self.messages[assistantIndex].text == placeholder {
-                self.messages[assistantIndex].text = ""
+            guard !token.isEmpty else { return }
+
+            if !streamedAnyToken {
+                streamedAnyToken = true
+                self.stopBufferingUpdates()
+                if self.isBufferingMessage(self.messages[assistantIndex].text) ||
+                    self.messages[assistantIndex].text == placeholder {
+                    self.messages[assistantIndex].text = ""
+                }
+                // Match web behavior: buffering pulse ends when first token arrives.
+                self.messages[assistantIndex].isPending = false
             }
             self.messages[assistantIndex].text += token
         }
 
         client.onProgress = { [weak self] stage, percent in
             guard let self = self else { return }
-            self.processingStage = stage
-            self.processingPercent = percent
+            if self.processingStage != stage {
+                self.processingStage = stage
+            }
+            if self.processingPercent != percent {
+                self.processingPercent = percent
+            }
         }
 
         client.onDone = { [weak self] response in

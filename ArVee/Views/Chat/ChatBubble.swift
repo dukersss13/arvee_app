@@ -3,6 +3,7 @@ import SwiftUI
 struct ChatBubble: View {
     let message: ChatMessage
     var onQuickReplyTap: ((String) -> Void)? = nil
+    @State private var pendingPulse = false
 
     private var isUser: Bool { message.role == .user }
 
@@ -29,6 +30,13 @@ struct ChatBubble: View {
                         .stroke(isUser ? Color.clear : Color.arveeLine, lineWidth: 0.5)
                 )
                 .shadow(color: isUser ? Color.clear : Color.arveeInk.opacity(0.06), radius: 5, x: 0, y: 2)
+                .opacity((message.isPending && !isUser) ? (pendingPulse ? 1.0 : 0.4) : 1.0)
+                .onAppear {
+                    updatePendingPulse(isActive: message.isPending && !isUser)
+                }
+                .onChange(of: message.isPending) { _, isPending in
+                    updatePendingPulse(isActive: isPending && !isUser)
+                }
 
                 if !isUser { Spacer(minLength: 60) }
             }
@@ -89,6 +97,17 @@ struct ChatBubble: View {
             }
         }
         .padding(.horizontal, 12)
+    }
+
+    private func updatePendingPulse(isActive: Bool) {
+        if isActive {
+            pendingPulse = false
+            withAnimation(.easeInOut(duration: 1.4).repeatForever(autoreverses: true)) {
+                pendingPulse = true
+            }
+        } else {
+            pendingPulse = false
+        }
     }
 }
 

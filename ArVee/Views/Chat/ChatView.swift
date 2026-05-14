@@ -164,16 +164,21 @@ struct ChatView: View {
                         .controlSize(.small)
                         .tint(.arveeTeal)
                     Text(viewModel.processingStage ?? "Working on your request...")
-                        .font(.system(.caption, design: .rounded).weight(.medium))
-                        .foregroundColor(.arveeInkMuted)
-                        .opacity(bufferingPulse ? 1.0 : 0.45)
+                        .font(.system(.caption, design: .rounded).weight(.semibold))
+                        .foregroundColor(.arveeTeal)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(Color.arveeTealSoft.opacity(bufferingPulse ? 0.52 : 0.2))
+                        )
                     Spacer()
                 }
                 .padding(.horizontal, 12)
                 .padding(.top, 4)
                 .onAppear {
                     bufferingPulse = false
-                    withAnimation(.easeInOut(duration: 1.25).repeatForever(autoreverses: true)) {
+                    withAnimation(.easeInOut(duration: 1.4).repeatForever(autoreverses: true)) {
                         bufferingPulse = true
                     }
                 }
