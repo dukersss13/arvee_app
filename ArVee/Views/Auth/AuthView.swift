@@ -42,6 +42,7 @@ private struct GoogleLogo: View {
                          with: .color(Color(red: 0.259, green: 0.522, blue: 0.957)))
         }
         .frame(width: size, height: size)
+        .allowsHitTesting(false)
     }
 
     private func drawArc(in context: inout GraphicsContext,
@@ -161,6 +162,7 @@ struct AuthView: View {
                 }
             }
             .pickerStyle(.segmented)
+            .scaleEffect(0.9)
 
             // Input fields
             VStack(spacing: 14) {
@@ -299,6 +301,7 @@ struct AuthView: View {
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .stroke(Color.arveeLine, lineWidth: 0.7)
             )
+            .contentShape(Rectangle())
         }
         .disabled(viewModel.isLoading)
         .offset(y: appeared ? 0 : 12)
