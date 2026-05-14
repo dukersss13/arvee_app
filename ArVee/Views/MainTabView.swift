@@ -16,6 +16,7 @@ struct MainTabView: View {
                 AuthView(viewModel: authVM)
             }
         }
+        .arveeKeyboardDismissToolbar()
         .onChange(of: authVM.isAuthenticated) { _, isAuthed in
             if !isAuthed {
                 sessionVM.clear()

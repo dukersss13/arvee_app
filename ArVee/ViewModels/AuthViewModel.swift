@@ -64,17 +64,40 @@ final class AuthViewModel: ObservableObject {
 
         isLoading = true
         errorMessage = nil
+        defer { isLoading = false }
+
         do {
             if mode == .signup {
-                _ = try await api.signUp(email: normalizedEmail, password: pwd)
+                _ = try await withTimeout(seconds: 25) {
+                    try await self.api.signUp(email: normalizedEmail, password: pwd)
+                }
             } else {
-                _ = try await api.login(email: normalizedEmail, password: pwd)
+                _ = try await withTimeout(seconds: 25) {
+                    try await self.api.login(email: normalizedEmail, password: pwd)
+                }
             }
             refreshAuthState()
+        } catch let error as GoogleAuthError {
+            errorMessage = error.localizedDescription
+        } catch let error as APIError {
+            switch error {
+            case .server(_, let message):
+                errorMessage = message
+            case .invalidURL:
+                errorMessage = "Could not connect to the server. Check API Base URL in Settings."
+            }
+        } catch let error as URLError {
+            switch error.code {
+            case .cannotConnectToHost, .dnsLookupFailed, .cannotFindHost, .notConnectedToInternet:
+                errorMessage = "Could not connect to the server. Check API Base URL in Settings."
+            case .timedOut:
+                errorMessage = "Connection timed out. Please try again."
+            default:
+                errorMessage = error.localizedDescription
+            }
         } catch {
             errorMessage = error.localizedDescription
         }
-        isLoading = false
     }
 
     func logout() {

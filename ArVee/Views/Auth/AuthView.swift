@@ -63,6 +63,13 @@ private struct GoogleLogo: View {
 struct AuthView: View {
     @ObservedObject var viewModel: AuthViewModel
     @State private var appeared = false
+    @FocusState private var focusedField: AuthField?
+
+    private enum AuthField {
+        case email
+        case password
+        case confirmPassword
+    }
 
     var body: some View {
         NavigationStack {
@@ -95,6 +102,9 @@ struct AuthView: View {
             }
             .arveePageBackground()
             .navigationBarTitleDisplayMode(.inline)
+            .onTapGesture {
+                focusedField = nil
+            }
             .onAppear {
                 viewModel.refreshAuthState()
                 withAnimation(.easeOut(duration: 0.6).delay(0.1)) {
@@ -125,6 +135,7 @@ struct AuthView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 80, height: 80)
+                    .offset(y: 3)
                     .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
                     .overlay(
                         RoundedRectangle(cornerRadius: 20, style: .continuous)
@@ -140,7 +151,7 @@ struct AuthView: View {
                     .font(.system(size: 34, weight: .bold, design: .rounded))
                     .foregroundColor(.arveeInk)
 
-                Text("Your receipts called.\nThey want to be validated.")
+                Text("Don't want to see your bank statement?\nMe neither.")
                     .font(.system(.subheadline, design: .rounded))
                     .foregroundColor(.arveeInkMuted)
                     .multilineTextAlignment(.center)
@@ -164,6 +175,20 @@ struct AuthView: View {
             .pickerStyle(.segmented)
             .scaleEffect(0.9)
 
+            if focusedField != nil {
+                HStack {
+                    Spacer()
+                    Button {
+                        focusedField = nil
+                    } label: {
+                        Label("Hide Keyboard", systemImage: "keyboard.chevron.compact.down")
+                            .font(.system(.caption, design: .rounded).weight(.semibold))
+                            .foregroundColor(.arveeTeal)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+
             // Input fields
             VStack(spacing: 14) {
                 authField(icon: "envelope.fill", placeholder: "Email") {
@@ -171,15 +196,18 @@ struct AuthView: View {
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
                         .keyboardType(.emailAddress)
+                        .focused($focusedField, equals: .email)
                 }
 
                 authField(icon: "lock.fill", placeholder: "Password") {
                     SecureField("Password", text: $viewModel.password)
+                        .focused($focusedField, equals: .password)
                 }
 
                 if viewModel.mode == .signup {
                     authField(icon: "lock.rotation", placeholder: "Confirm Password") {
                         SecureField("Confirm Password", text: $viewModel.confirmPassword)
+                            .focused($focusedField, equals: .confirmPassword)
                     }
                     .transition(.move(edge: .top).combined(with: .opacity))
                 }

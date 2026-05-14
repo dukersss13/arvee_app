@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 // MARK: - Card Style Modifier
 
@@ -268,6 +269,36 @@ struct ArveeGradientCardModifier: ViewModifier {
 extension View {
     func arveeGradientCard(accent: Color = .arveeTeal, cornerRadius: CGFloat = 16) -> some View {
         modifier(ArveeGradientCardModifier(accentColor: accent, cornerRadius: cornerRadius))
+    }
+}
+
+// MARK: - Keyboard Dismiss Toolbar
+
+private struct ArveeKeyboardDismissToolbarModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .toolbar {
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Done") {
+                        UIApplication.shared.arveeEndEditing()
+                    }
+                    .font(.system(.body, design: .rounded).weight(.semibold))
+                    .foregroundColor(.arveeTeal)
+                }
+            }
+    }
+}
+
+extension View {
+    func arveeKeyboardDismissToolbar() -> some View {
+        modifier(ArveeKeyboardDismissToolbarModifier())
+    }
+}
+
+private extension UIApplication {
+    func arveeEndEditing() {
+        sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 }
 

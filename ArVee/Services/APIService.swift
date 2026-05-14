@@ -368,6 +368,24 @@ final class APIService {
             try checkHTTPResponse(response, data: data)
             return data
         } catch {
+            let originalBaseURL = baseURL
+            let defaultURL = Self.normalizedBaseURL(Self.defaultBaseURL)
+
+            // If a stale custom URL is saved, fall back to the production default first.
+            if shouldAttemptAutoDiscovery(error), originalBaseURL != defaultURL {
+                do {
+                    baseURL = defaultURL
+                    var fallbackRequest = URLRequest(url: try makeURL(path: path))
+                    fallbackRequest.httpMethod = "GET"
+                    applyAuthHeaders(&fallbackRequest)
+                    let (fallbackData, fallbackResponse) = try await session.data(for: fallbackRequest)
+                    try checkHTTPResponse(fallbackResponse, data: fallbackData)
+                    return fallbackData
+                } catch {
+                    baseURL = originalBaseURL
+                }
+            }
+
             guard shouldAttemptAutoDiscovery(error),
                   let discoveredURL = await discoverBackendBaseURL(),
                   discoveredURL != baseURL
@@ -401,6 +419,26 @@ final class APIService {
             try checkHTTPResponse(response, data: data)
             return data
         } catch {
+            let originalBaseURL = baseURL
+            let defaultURL = Self.normalizedBaseURL(Self.defaultBaseURL)
+
+            // If a stale custom URL is saved, fall back to the production default first.
+            if shouldAttemptAutoDiscovery(error), originalBaseURL != defaultURL {
+                do {
+                    baseURL = defaultURL
+                    var fallbackRequest = URLRequest(url: try makeURL(path: path))
+                    fallbackRequest.httpMethod = "POST"
+                    fallbackRequest.setValue(contentType, forHTTPHeaderField: "Content-Type")
+                    applyAuthHeaders(&fallbackRequest)
+                    fallbackRequest.httpBody = body
+                    let (fallbackData, fallbackResponse) = try await session.data(for: fallbackRequest)
+                    try checkHTTPResponse(fallbackResponse, data: fallbackData)
+                    return fallbackData
+                } catch {
+                    baseURL = originalBaseURL
+                }
+            }
+
             guard shouldAttemptAutoDiscovery(error),
                   let discoveredURL = await discoverBackendBaseURL(),
                   discoveredURL != baseURL
