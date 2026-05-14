@@ -1,6 +1,7 @@
 import SwiftUI
 import PhotosUI
 import UniformTypeIdentifiers
+import UIKit
 
 struct UploadView: View {
     @ObservedObject var sessionVM: SessionViewModel
@@ -13,12 +14,15 @@ struct UploadView: View {
     @State private var showProofDocPicker = false
     @State private var hourglassRotation: Double = 0
     @State private var bufferingTextIndex = 0
+    @State private var previewImage: PreviewImage?
+
+    @Environment(\.openURL) private var openURL
 
     private let bufferingTexts = [
-        "Matching transactions and proofs...",
-        "Checking totals and dates...",
-        "Preparing validation suggestions...",
-        "Almost there, finalizing results...",
+        "Teaching receipts to line up politely...",
+        "Tickling the totals until they confess...",
+        "Whispering with your transactions and proofs...",
+        "Polishing your validation results with sparkle...",
     ]
 
     private var currentStep: StepState {
@@ -225,11 +229,26 @@ struct UploadView: View {
             let hasItems = photoCount > 0 || !documentURLs.isEmpty
             if hasItems {
                 VStack(spacing: 6) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "hand.tap")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundColor(.arveeInkMuted)
+                        Text("Tap a file to preview")
+                            .font(.system(.caption2, design: .rounded))
+                            .foregroundColor(.arveeInkMuted)
+                        Spacer()
+                    }
+
                     // Photo items
                     ForEach(0..<photoCount, id: \.self) { idx in
                         ArveeFileRow(
                             filename: "Photo \(idx + 1).jpg",
-                            subtitle: "From photo library"
+                            subtitle: "From photo library",
+                            onTap: {
+                                Task {
+                                    await previewPhoto(at: idx, from: photoSelection.wrappedValue)
+                                }
+                            }
                         ) {
                             onRemovePhoto(idx)
                         }
@@ -238,7 +257,10 @@ struct UploadView: View {
                     ForEach(Array(documentURLs.enumerated()), id: \.offset) { idx, url in
                         ArveeFileRow(
                             filename: url.lastPathComponent,
-                            subtitle: url.pathExtension.uppercased()
+                            subtitle: url.pathExtension.uppercased(),
+                            onTap: {
+                                _ = openURL(url)
+                            }
                         ) {
                             onRemoveDocument(idx)
                         }
@@ -249,6 +271,26 @@ struct UploadView: View {
         .padding(16)
         .arveeCard()
         .padding(.horizontal, 16)
+        .sheet(item: $previewImage) { item in
+            NavigationStack {
+                Color.black
+                    .overlay(
+                        Image(uiImage: item.image)
+                            .resizable()
+                            .scaledToFit()
+                            .padding()
+                    )
+                    .ignoresSafeArea()
+                    .toolbar {
+                        ToolbarItem(placement: .topBarTrailing) {
+                            Button("Done") {
+                                previewImage = nil
+                            }
+                            .foregroundColor(.white)
+                        }
+                    }
+            }
+        }
     }
 
     // MARK: - Validate Button
@@ -385,4 +427,17 @@ struct UploadView: View {
         }
         .padding(.top, 8)
     }
+
+    private func previewPhoto(at index: Int, from items: [PhotosPickerItem]) async {
+        guard index < items.count else { return }
+        if let data = try? await items[index].loadTransferable(type: Data.self),
+           let image = UIImage(data: data) {
+            previewImage = PreviewImage(image: image)
+        }
+    }
+}
+
+private struct PreviewImage: Identifiable {
+    let id = UUID()
+    let image: UIImage
 }
