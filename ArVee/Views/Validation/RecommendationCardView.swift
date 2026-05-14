@@ -40,9 +40,7 @@ struct RecommendationCardView: View {
                 Spacer()
                 fieldColumn("Total", row.value(for: "Transaction Total"))
             }
-            if let category = recommendationCategory(primary: "Transaction Category", fallback: "Category") {
-                categoryRow(label: "Category", value: category)
-            }
+            categoryRow(label: "Category", value: recommendationCategoryForTransaction)
 
             Divider().overlay(Color.arveeLine)
 
@@ -55,9 +53,7 @@ struct RecommendationCardView: View {
                 Spacer()
                 fieldColumn("Total", row.value(for: "Proof Total"))
             }
-            if let category = recommendationCategory(primary: "Proof Category", fallback: "Category") {
-                categoryRow(label: "Category", value: category)
-            }
+            categoryRow(label: "Category", value: recommendationCategoryForProof)
 
             // Reason / confidence
             if let reason = row.fields["Reason"], !reason.isEmpty {
@@ -121,12 +117,35 @@ struct RecommendationCardView: View {
         }
     }
 
-    private func recommendationCategory(primary: String, fallback: String) -> String? {
-        let primaryValue = row.value(for: primary)
-        if !primaryValue.isEmpty {
-            return primaryValue
+    private var recommendationCategoryForTransaction: String {
+        resolveCategory(
+            keys: [
+                "Transaction Category",
+                "transaction_category",
+                "Category",
+                "category",
+            ]
+        )
+    }
+
+    private var recommendationCategoryForProof: String {
+        resolveCategory(
+            keys: [
+                "Proof Category",
+                "proof_category",
+                "Category",
+                "category",
+            ]
+        )
+    }
+
+    private func resolveCategory(keys: [String]) -> String {
+        for key in keys {
+            let value = row.value(for: key).trimmingCharacters(in: .whitespacesAndNewlines)
+            if !value.isEmpty {
+                return value
+            }
         }
-        let fallbackValue = row.value(for: fallback)
-        return fallbackValue.isEmpty ? nil : fallbackValue
+        return "Other"
     }
 }

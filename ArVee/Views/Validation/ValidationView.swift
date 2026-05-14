@@ -1,6 +1,17 @@
 import SwiftUI
 
 private let resultsFontScale: CGFloat = 1.05
+private let validationCategoryOptions: [String] = [
+    "Food",
+    "Shopping",
+    "Medical",
+    "Transport",
+    "Utilities",
+    "Entertainment",
+    "Travel",
+    "Health & Fitness",
+    "Other",
+]
 
 private func scaledResultsFont(_ base: CGFloat) -> CGFloat {
     base * resultsFontScale
@@ -323,20 +334,7 @@ struct ValidationView: View {
     }
 
     private var availableCategoryOptions: [String] {
-        var collected: Set<String> = []
-        let allRows = viewModel.validatedRows + viewModel.discrepancies + viewModel.recommendations + viewModel.unmatchedTransactions + viewModel.unmatchedProofs
-        let keys = ["Category", "category", "Transaction Category", "Proof Category"]
-
-        for row in allRows {
-            for key in keys {
-                let value = row.value(for: key).trimmingCharacters(in: .whitespacesAndNewlines)
-                if !value.isEmpty {
-                    collected.insert(value)
-                }
-            }
-        }
-
-        return collected.sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+        validationCategoryOptions
     }
 
     // MARK: - Collapsible Section
