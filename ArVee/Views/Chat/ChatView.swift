@@ -11,7 +11,7 @@ struct ChatView: View {
         "How much did I spend on food?",
         "What's my top spending category?",
         "Show my top 5 categories",
-        "Chart my spending this month",
+        "Chart my spending",
     ]
 
     var body: some View {
@@ -160,6 +160,16 @@ struct ChatView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .gesture(
+                DragGesture(minimumDistance: 60, coordinateSpace: .local)
+                    .onEnded { value in
+                        if value.translation.width > 80,
+                           abs(value.translation.height) < value.translation.width {
+                            inputFocused = false
+                            showingQuickSuggestions = true
+                        }
+                    }
+            )
 
             Divider().overlay(Color.arveeLine)
             inputBar
