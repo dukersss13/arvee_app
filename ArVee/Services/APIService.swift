@@ -104,7 +104,7 @@ final class APIService {
                     isConnected: false,
                     message: "Cannot resolve host. Use your Mac LAN IP on a physical device."
                 )
-            case .cannotConnectToHost, .cannotConnectToNetwork:
+            case .cannotConnectToHost, .networkConnectionLost:
                 return HealthCheckResult(
                     isConnected: false,
                     message: "Cannot reach backend. Check backend.py, URL, and port 7860."
@@ -311,7 +311,7 @@ final class APIService {
         case .cannotFindHost,
              .dnsLookupFailed,
              .cannotConnectToHost,
-             .cannotConnectToNetwork,
+             .networkConnectionLost,
              .timedOut,
              .networkConnectionLost,
              .notConnectedToInternet:

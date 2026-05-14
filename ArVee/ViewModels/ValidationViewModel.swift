@@ -94,22 +94,26 @@ final class ValidationViewModel: ObservableObject {
             proofFiles: proofFiles
         )
 
+        let client = ValidationSSEClient()
+        validationSSEClient = client
+
         try await withCheckedThrowingContinuation { continuation in
-            let client = ValidationSSEClient()
             var didFinish = false
 
-            func completeOnce(_ work: () -> Void) {
+            func completeOnce(_ work: @escaping @MainActor () -> Void) {
                 guard !didFinish else { return }
                 didFinish = true
-                work()
-                self.validationSSEClient = nil
+                Task { @MainActor in
+                    work()
+                    self.validationSSEClient = nil
+                }
             }
 
-            self.validationSSEClient = client
-
             client.onProgress = { [weak self] stage, percent in
-                self?.validationStage = stage
-                self?.validationPercent = percent
+                Task { @MainActor in
+                    self?.validationStage = stage
+                    self?.validationPercent = percent
+                }
             }
 
             client.onDone = { [weak self] response in

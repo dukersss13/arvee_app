@@ -35,6 +35,10 @@ struct ResultRow: Identifiable, Hashable {
         self.fields = mapped
     }
 
+    init(fields: [String: String]) {
+        self.fields = fields
+    }
+
     func value(for key: String) -> String {
         fields[key] ?? ""
     }

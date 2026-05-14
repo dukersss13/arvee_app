@@ -7,34 +7,34 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		A10001 /* ArVeeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10001; };
-		A10002 /* AnyCodable.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10002; };
-		A10003 /* Session.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10003; };
-		A10004 /* ValidationResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10004; };
-		A10005 /* ChatMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10005; };
-		A10006 /* ChartData.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10006; };
-		A10007 /* APIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10007; };
-		A10008 /* SSEClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10008; };
-		A10009 /* SessionViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10009; };
-		A10010 /* ValidationViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10010; };
-		A10011 /* ChatViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10011; };
-		A10012 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10012; };
-		A10013 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10013; };
-		A10014 /* StatusBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10014; };
-		A10016 /* ValidationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10016; };
-		A10017 /* ResultTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10017; };
-		A10018 /* ChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10018; };
-		A10019 /* ChatBubble.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10019; };
-		A10020 /* ChartCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10020; };
-		A10021 /* DataTableCards.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10021; };
-		A10022 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B10022; };
-		A10023 /* ArVeeTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10023; };
-		A10024 /* ArVeeStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10024; };
-		A10025 /* UploadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10025; };
-		A10026 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10026; };
-		A10027 /* DiscrepancyCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10027; };
-		A10028 /* RecommendationCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10028; };
-		A10029 /* ManualMatchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10029; };
+		A10001 /* ArVeeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10001 /* ArVeeApp.swift */; };
+		A10002 /* AnyCodable.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10002 /* AnyCodable.swift */; };
+		A10003 /* Session.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10003 /* Session.swift */; };
+		A10004 /* ValidationResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10004 /* ValidationResult.swift */; };
+		A10005 /* ChatMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10005 /* ChatMessage.swift */; };
+		A10006 /* ChartData.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10006 /* ChartData.swift */; };
+		A10007 /* APIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10007 /* APIService.swift */; };
+		A10008 /* SSEClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10008 /* SSEClient.swift */; };
+		A10009 /* SessionViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10009 /* SessionViewModel.swift */; };
+		A10010 /* ValidationViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10010 /* ValidationViewModel.swift */; };
+		A10011 /* ChatViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10011 /* ChatViewModel.swift */; };
+		A10012 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10012 /* MainTabView.swift */; };
+		A10013 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10013 /* SettingsView.swift */; };
+		A10014 /* StatusBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10014 /* StatusBanner.swift */; };
+		A10016 /* ValidationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10016 /* ValidationView.swift */; };
+		A10017 /* ResultTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10017 /* ResultTableView.swift */; };
+		A10018 /* ChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10018 /* ChatView.swift */; };
+		A10019 /* ChatBubble.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10019 /* ChatBubble.swift */; };
+		A10020 /* ChartCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10020 /* ChartCardView.swift */; };
+		A10021 /* DataTableCards.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10021 /* DataTableCards.swift */; };
+		A10022 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B10022 /* Assets.xcassets */; };
+		A10023 /* ArVeeTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10023 /* ArVeeTheme.swift */; };
+		A10024 /* ArVeeStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10024 /* ArVeeStyle.swift */; };
+		A10025 /* UploadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10025 /* UploadView.swift */; };
+		A10026 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10026 /* HomeView.swift */; };
+		A10027 /* DiscrepancyCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10027 /* DiscrepancyCardView.swift */; };
+		A10028 /* RecommendationCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10028 /* RecommendationCardView.swift */; };
+		A10029 /* ManualMatchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10029 /* ManualMatchView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -147,22 +147,6 @@
 			path = Views;
 			sourceTree = "<group>";
 		};
-		E10013 /* Home */ = {
-			isa = PBXGroup;
-			children = (
-				B10026 /* HomeView.swift */,
-			);
-			path = Home;
-			sourceTree = "<group>";
-		};
-		E10012 /* Upload */ = {
-			isa = PBXGroup;
-			children = (
-				B10025 /* UploadView.swift */,
-			);
-			path = Upload;
-			sourceTree = "<group>";
-		};
 		E10007 /* Components */ = {
 			isa = PBXGroup;
 			children = (
@@ -171,7 +155,6 @@
 			path = Components;
 			sourceTree = "<group>";
 		};
-
 		E10009 /* Validation */ = {
 			isa = PBXGroup;
 			children = (
@@ -204,6 +187,22 @@
 			path = Theme;
 			sourceTree = "<group>";
 		};
+		E10012 /* Upload */ = {
+			isa = PBXGroup;
+			children = (
+				B10025 /* UploadView.swift */,
+			);
+			path = Upload;
+			sourceTree = "<group>";
+		};
+		E10013 /* Home */ = {
+			isa = PBXGroup;
+			children = (
+				B10026 /* HomeView.swift */,
+			);
+			path = Home;
+			sourceTree = "<group>";
+		};
 		E10099 /* Products */ = {
 			isa = PBXGroup;
 			children = (
@@ -217,7 +216,7 @@
 /* Begin PBXNativeTarget section */
 		F10001 /* ArVee */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = G10003;
+			buildConfigurationList = G10003 /* Build configuration list for PBXNativeTarget "ArVee" */;
 			buildPhases = (
 				F10002 /* Sources */,
 				D10001 /* Frameworks */,
@@ -247,7 +246,7 @@
 					};
 				};
 			};
-			buildConfigurationList = G10001;
+			buildConfigurationList = G10001 /* Build configuration list for PBXProject "ArVee" */;
 			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -440,7 +439,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = WA48D35457;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = ArVee;
@@ -473,7 +472,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = WA48D35457;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = ArVee;

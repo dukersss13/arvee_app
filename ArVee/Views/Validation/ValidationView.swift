@@ -296,7 +296,7 @@ struct ValidationView: View {
                     Spacer()
 
                     if let action {
-                        Button(action.1) {
+                        Button(action: action.1) {
                             Text(action.0)
                                 .font(.system(.caption, design: .rounded).weight(.semibold))
                                 .foregroundColor(.arveeTeal)
