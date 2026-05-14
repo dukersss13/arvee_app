@@ -36,7 +36,7 @@ struct RecommendationCardView: View {
                         .font(.system(size: 10))
                         .foregroundColor(.arveeTeal)
                     Text(reason)
-                        .font(.system(size: 12, weight: .medium, design: .rounded))
+                        .font(.system(size: 13.8, weight: .medium, design: .rounded))
                         .foregroundColor(.arveeInkMuted)
                 }
             }

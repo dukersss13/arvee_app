@@ -30,7 +30,7 @@ struct ChatView: View {
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    if !viewModel.messages.isEmpty && !showingQuickSuggestions {
+                    if !viewModel.messages.isEmpty {
                         Button {
                             inputFocused = false
                             showingQuickSuggestions = true
@@ -40,6 +40,7 @@ struct ChatView: View {
                         }
                         .accessibilityLabel("Back to quick suggestions")
                         .foregroundColor(.arveeTeal)
+                        .disabled(showingQuickSuggestions)
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
@@ -111,6 +112,10 @@ struct ChatView: View {
                 .padding(.bottom, 16)
                 .frame(maxWidth: .infinity, alignment: .top)
             }
+            .scrollDismissesKeyboard(.interactively)
+            .onTapGesture {
+                inputFocused = false
+            }
 
             Divider().overlay(Color.arveeLine)
             inputBar
@@ -136,6 +141,10 @@ struct ChatView: View {
                     }
                     .padding(.vertical, 12)
                     .padding(.horizontal, 6)
+                }
+                .scrollDismissesKeyboard(.interactively)
+                .onTapGesture {
+                    inputFocused = false
                 }
                 .onChange(of: viewModel.messages.count) { _, _ in
                     scrollToBottom(proxy)
@@ -166,6 +175,20 @@ struct ChatView: View {
                     .padding(.vertical, 6)
                 }
                 .background(Color.arveePaper.opacity(0.95))
+            }
+
+            if viewModel.isStreaming {
+                HStack(spacing: 6) {
+                    ProgressView()
+                        .controlSize(.small)
+                        .tint(.arveeTeal)
+                    Text(viewModel.processingStage ?? "Working on your request...")
+                        .font(.system(.caption, design: .rounded).weight(.medium))
+                        .foregroundColor(.arveeInkMuted)
+                    Spacer()
+                }
+                .padding(.horizontal, 12)
+                .padding(.top, 4)
             }
 
             Divider().overlay(Color.arveeLine)
@@ -233,7 +256,9 @@ struct ChatView: View {
     private func send() {
         guard let sessionId = sessionVM.sessionId else { return }
         showingQuickSuggestions = false
-        viewModel.sendMessage(sessionId: sessionId)
+        Task {
+            await viewModel.sendMessage(sessionId: sessionId)
+        }
         inputFocused = false
     }
 

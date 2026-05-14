@@ -247,7 +247,7 @@ struct ValidationView: View {
                     .foregroundColor(accentColor.opacity(0.6))
             }
             Text("\(value)")
-                .font(.system(size: 32, weight: .bold, design: .rounded))
+                .font(.system(size: 28.8, weight: .bold, design: .rounded))
                 .foregroundColor(.arveeInk)
                 .contentTransition(.numericText())
         }
@@ -313,20 +313,7 @@ struct ValidationView: View {
 
             // Content
             if expandedSections.contains(section) {
-                if count == 0 {
-                    HStack {
-                        Image(systemName: "tray")
-                            .font(.caption)
-                            .foregroundColor(.arveeInkMuted)
-                        Text("No items")
-                            .font(.system(.caption, design: .rounded))
-                            .foregroundColor(.arveeInkMuted)
-                    }
-                    .padding(12)
-                    .frame(maxWidth: .infinity)
-                    .arveeCard(cornerRadius: 10)
-                    .padding(.horizontal, 16)
-                } else {
+                if count > 0 {
                     LazyVStack(spacing: 8) {
                         content()
                     }

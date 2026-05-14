@@ -6,9 +6,13 @@ final class ChatViewModel: ObservableObject {
     @Published var inputText = ""
     @Published var isStreaming = false
     @Published var errorMessage: String?
+    @Published var processingStage: String?
+    @Published var processingPercent: Int?
 
     private var sseClient: SSEClient?
     private let api = APIService.shared
+    private var stateSyncHandler: ((String) async -> Void)?
+    private var bufferingTask: Task<Void, Never>?
 
     private let whimsicalBufferMessages = [
         "Let me peek into your receipts...",
@@ -18,9 +22,19 @@ final class ChatViewModel: ObservableObject {
         "Brewing a fresh spending snapshot...",
     ]
 
-    func sendMessage(sessionId: String) {
+    func setStateSyncHandler(_ handler: @escaping (String) async -> Void) {
+        stateSyncHandler = handler
+    }
+
+    func sendMessage(sessionId: String) async {
+        guard !isStreaming else { return }
+
         let text = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
+
+        if let stateSyncHandler {
+            await stateSyncHandler(sessionId)
+        }
 
         let userMsg = ChatMessage(
             role: .user, text: text, isPending: false,
@@ -42,6 +56,10 @@ final class ChatViewModel: ObservableObject {
 
         isStreaming = true
         errorMessage = nil
+        processingStage = "Working on your request..."
+        processingPercent = 0
+
+        startBufferingUpdates(for: assistantIndex)
 
         let (url, body) = api.chatStreamURL(sessionId: sessionId, message: text)
         let client = SSEClient()
@@ -49,14 +67,35 @@ final class ChatViewModel: ObservableObject {
 
         client.onToken = { [weak self] token in
             guard let self = self else { return }
+            guard self.messages.indices.contains(assistantIndex) else { return }
+            self.stopBufferingUpdates()
             if self.messages[assistantIndex].text == placeholder {
                 self.messages[assistantIndex].text = ""
             }
             self.messages[assistantIndex].text += token
         }
 
+        client.onProgress = { [weak self] stage, percent in
+            guard let self = self else { return }
+            self.processingStage = stage
+            self.processingPercent = percent
+            if self.messages.indices.contains(assistantIndex),
+               self.messages[assistantIndex].isPending,
+               self.isBufferingMessage(self.messages[assistantIndex].text) {
+                self.messages[assistantIndex].text = stage
+            }
+        }
+
         client.onDone = { [weak self] response in
             guard let self = self else { return }
+            guard self.messages.indices.contains(assistantIndex) else {
+                self.isStreaming = false
+                self.processingStage = nil
+                self.processingPercent = nil
+                self.sseClient = nil
+                return
+            }
+            self.stopBufferingUpdates()
             self.messages[assistantIndex].isPending = false
 
             // If no tokens were streamed, use answer payload instead of placeholder text.
@@ -78,14 +117,26 @@ final class ChatViewModel: ObservableObject {
             }
 
             self.isStreaming = false
+            self.processingStage = nil
+            self.processingPercent = nil
             self.sseClient = nil
         }
 
         client.onError = { [weak self] msg in
             guard let self = self else { return }
+            guard self.messages.indices.contains(assistantIndex) else {
+                self.isStreaming = false
+                self.processingStage = nil
+                self.processingPercent = nil
+                self.sseClient = nil
+                return
+            }
+            self.stopBufferingUpdates()
             self.messages[assistantIndex].isPending = false
             self.messages[assistantIndex].text = "Error: \(msg)"
             self.isStreaming = false
+            self.processingStage = nil
+            self.processingPercent = nil
             self.sseClient = nil
         }
 
@@ -95,9 +146,15 @@ final class ChatViewModel: ObservableObject {
     func cancelStream() {
         sseClient?.cancel()
         sseClient = nil
+        stopBufferingUpdates()
         isStreaming = false
+        processingStage = nil
+        processingPercent = nil
         if let last = messages.indices.last, messages[last].isPending {
             messages[last].isPending = false
+            if messages[last].text.isEmpty || isBufferingMessage(messages[last].text) {
+                messages[last].text = "No problem. I stopped that request. Ask me anything else when you're ready."
+            }
         }
     }
 
@@ -105,5 +162,34 @@ final class ChatViewModel: ObservableObject {
         cancelStream()
         messages = []
         errorMessage = nil
+    }
+
+    private func startBufferingUpdates(for assistantIndex: Int) {
+        stopBufferingUpdates()
+        bufferingTask = Task { [weak self] in
+            guard let self = self else { return }
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: 1_600_000_000)
+                guard !Task.isCancelled else { return }
+                guard self.isStreaming, self.messages.indices.contains(assistantIndex) else { return }
+                if !self.messages[assistantIndex].isPending {
+                    return
+                }
+
+                // Keep the pending assistant bubble feeling alive before first tokens arrive.
+                if self.messages[assistantIndex].text.isEmpty || self.isBufferingMessage(self.messages[assistantIndex].text) {
+                    self.messages[assistantIndex].text = self.whimsicalBufferMessages.randomElement() ?? "Working on your request..."
+                }
+            }
+        }
+    }
+
+    private func stopBufferingUpdates() {
+        bufferingTask?.cancel()
+        bufferingTask = nil
+    }
+
+    private func isBufferingMessage(_ text: String) -> Bool {
+        whimsicalBufferMessages.contains(text) || text == "Working on your request..."
     }
 }

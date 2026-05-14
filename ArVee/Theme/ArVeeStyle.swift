@@ -394,7 +394,7 @@ struct ArveeMetricCard: View {
                     .foregroundColor(accentColor.opacity(0.6))
             }
             Text(value)
-                .font(.system(size: 32, weight: .bold, design: .rounded))
+                .font(.system(size: 28.8, weight: .bold, design: .rounded))
                 .foregroundColor(.arveeInk)
                 .contentTransition(.numericText())
         }

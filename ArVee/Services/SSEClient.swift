@@ -7,6 +7,7 @@ final class SSEClient: NSObject, URLSessionDataDelegate {
     private var buffer = ""
 
     var onToken: ((String) -> Void)?
+    var onProgress: ((String, Int?) -> Void)?
     var onDone: ((ChatAskResponse) -> Void)?
     var onError: ((String) -> Void)?
 
@@ -63,6 +64,14 @@ final class SSEClient: NSObject, URLSessionDataDelegate {
         }
 
         switch event {
+        case "progress":
+            if let json = parseJSON(data) {
+                let stage = (json["stage"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
+                let percent = json["percent"] as? Int
+                onProgress?((stage?.isEmpty == false ? stage : "Working on your request...") ?? "Working on your request...", percent)
+            } else {
+                onProgress?("Working on your request...", nil)
+            }
         case "token":
             if let json = parseJSON(data), let token = json["token"] as? String {
                 onToken?(token)

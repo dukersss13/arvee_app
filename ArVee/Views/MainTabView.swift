@@ -58,6 +58,11 @@ struct MainTabView: View {
         .tint(.arveeTeal)
         .toolbarBackground(Color.arveePaper, for: .tabBar)
         .toolbarBackground(.visible, for: .tabBar)
+        .task {
+            chatVM.setStateSyncHandler { sessionId in
+                await validationVM.saveCurrentState(sessionId: sessionId)
+            }
+        }
     }
 }
 
