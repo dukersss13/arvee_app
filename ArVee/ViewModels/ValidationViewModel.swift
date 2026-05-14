@@ -80,12 +80,26 @@ final class ValidationViewModel: ObservableObject {
                 validationPercent = 100
                 validationStage = "Validation complete."
             } catch {
-                errorMessage = error.localizedDescription
+                if (error as NSError).code == NSURLErrorCancelled {
+                    errorMessage = nil
+                } else {
+                    errorMessage = error.localizedDescription
+                }
             }
         }
         isValidating = false
         validationStage = nil
         validationPercent = nil
+    }
+
+    /// Cancel an in-progress validation run.
+    func cancelValidation() {
+        validationSSEClient?.cancel()
+        validationSSEClient = nil
+        isValidating = false
+        validationStage = nil
+        validationPercent = nil
+        errorMessage = nil
     }
 
     private func runValidationStream(
@@ -313,7 +327,7 @@ final class ValidationViewModel: ObservableObject {
 
     func canRemoveAcceptedValidatedRow(_ row: ResultRow) -> Bool {
         let source = row.value(for: acceptedSourceKey).lowercased()
-        return source == "recommendation" || source == "discrepancy"
+        return source == "recommendation" || source == "discrepancy" || source == "manual"
     }
 
     func removeAcceptedValidatedRow(rowId: UUID) {
@@ -325,6 +339,8 @@ final class ValidationViewModel: ObservableObject {
             restoreDiscrepancy(from: row)
         } else if source == "recommendation" {
             restoreRecommendationAndUnmatchedRows(from: row)
+        } else if source == "manual" {
+            restoreManualMatch(from: row)
         }
 
         persistSessionStateIfPossible()
@@ -407,6 +423,7 @@ final class ValidationViewModel: ObservableObject {
         }
         fields["Result"] = "Manually Matched"
         fields["Reason"] = "Matched manually by user"
+        fields[acceptedSourceKey] = "manual"
 
         validatedRows.append(ResultRow(fields: fields))
         persistSessionStateIfPossible()
@@ -492,6 +509,31 @@ final class ValidationViewModel: ObservableObject {
         if !containsRecommendation(recommendationFields) {
             recommendations.append(ResultRow(fields: recommendationFields))
         }
+
+        let txUnmatched: [String: String] = [
+            "Business Name": row.value(for: "Transaction Business Name"),
+            "Total": row.value(for: "Transaction Total"),
+            "Date": row.value(for: "Transaction Date"),
+            "Category": txCategory,
+        ]
+        if !containsUnmatched(unmatchedTransactions, candidate: txUnmatched) {
+            unmatchedTransactions.append(ResultRow(fields: txUnmatched))
+        }
+
+        let proofUnmatched: [String: String] = [
+            "Business Name": row.value(for: "Proof Business Name"),
+            "Total": row.value(for: "Proof Total"),
+            "Date": row.value(for: "Proof Date"),
+            "Category": proofCategory,
+        ]
+        if !containsUnmatched(unmatchedProofs, candidate: proofUnmatched) {
+            unmatchedProofs.append(ResultRow(fields: proofUnmatched))
+        }
+    }
+
+    private func restoreManualMatch(from row: ResultRow) {
+        let txCategory = row.value(for: "Transaction Category")
+        let proofCategory = row.value(for: "Proof Category")
 
         let txUnmatched: [String: String] = [
             "Business Name": row.value(for: "Transaction Business Name"),

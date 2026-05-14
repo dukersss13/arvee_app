@@ -322,6 +322,14 @@ struct UploadView: View {
                 .foregroundColor(.arveeInk)
                 .frame(maxWidth: .infinity, alignment: .center)
                 .multilineTextAlignment(.center)
+
+            Button {
+                validationVM.cancelValidation()
+            } label: {
+                Label("Cancel", systemImage: "xmark.circle")
+            }
+            .buttonStyle(ArveeSecondaryButtonStyle())
+            .padding(.top, 4)
         }
         .padding(24)
         .frame(maxWidth: .infinity)
