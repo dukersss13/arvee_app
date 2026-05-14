@@ -255,11 +255,31 @@ final class ValidationViewModel: ObservableObject {
         var fields = rec.fields
         fields["Result"] = "Validated (Recommended)"
 
-        if fields["Category"]?.isEmpty ?? true {
-            let txCategory = fields["Transaction Category"] ?? ""
-            let proofCategory = fields["Proof Category"] ?? ""
-            fields["Category"] = !txCategory.isEmpty ? txCategory : proofCategory
-        }
+        let txCategory = (
+            fields["Transaction Category"]
+            ?? fields["transaction_category"]
+            ?? fields["Category"]
+            ?? fields["category"]
+            ?? ""
+        ).trimmingCharacters(in: .whitespacesAndNewlines)
+
+        let proofCategory = (
+            fields["Proof Category"]
+            ?? fields["proof_category"]
+            ?? fields["Category"]
+            ?? fields["category"]
+            ?? ""
+        ).trimmingCharacters(in: .whitespacesAndNewlines)
+
+        let unifiedCategory = !txCategory.isEmpty
+            ? txCategory
+            : (!proofCategory.isEmpty ? proofCategory : "Other")
+
+        // Keep all category fields in sync so validated cards always show
+        // one editable category dropdown.
+        fields["Category"] = unifiedCategory
+        fields["Transaction Category"] = unifiedCategory
+        fields["Proof Category"] = unifiedCategory
 
         // Remove matching items from unmatched lists by business name
         let txName = rec.value(for: "Transaction Business Name")
