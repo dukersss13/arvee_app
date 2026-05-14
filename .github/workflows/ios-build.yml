@@ -1,0 +1,48 @@
+name: iOS Build Smoke Test
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "ArVee/**"
+      - "ArVee.xcodeproj/**"
+      - ".github/workflows/ios-build.yml"
+  pull_request:
+    paths:
+      - "ArVee/**"
+      - "ArVee.xcodeproj/**"
+      - ".github/workflows/ios-build.yml"
+
+jobs:
+  build:
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Xcode Version
+        run: xcodebuild -version
+
+      - name: List Project Schemes
+        run: xcodebuild -list -project ArVee.xcodeproj
+
+      - name: Build Debug (iOS Simulator)
+        run: |
+          xcodebuild \
+            -project ArVee.xcodeproj \
+            -scheme ArVee \
+            -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Build Release (iOS Simulator)
+        run: |
+          xcodebuild \
+            -project ArVee.xcodeproj \
+            -scheme ArVee \
+            -configuration Release \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO \
+            build
