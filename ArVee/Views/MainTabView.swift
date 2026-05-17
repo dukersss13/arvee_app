@@ -19,19 +19,12 @@ struct MainTabView: View {
                 }
                 .transition(AnyTransition.opacity)
             } else {
-                if authVM.isAuthenticated {
-                    contentTabs
-                        .transition(AnyTransition.asymmetric(
-                            insertion: AnyTransition.opacity.combined(with: .scale(scale: 0.98)),
-                            removal: AnyTransition.opacity
-                        ))
-                } else {
-                    AuthView(viewModel: authVM)
-                        .transition(AnyTransition.asymmetric(
-                            insertion: AnyTransition.opacity.combined(with: .move(edge: .bottom)),
-                            removal: AnyTransition.opacity
-                        ))
-                }
+                // Authentication is disabled for local development — always show main tabs.
+                contentTabs
+                    .transition(AnyTransition.asymmetric(
+                        insertion: AnyTransition.opacity.combined(with: .scale(scale: 0.98)),
+                        removal: AnyTransition.opacity
+                    ))
             }
         }
         .arveeKeyboardDismissToolbar()

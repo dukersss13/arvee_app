@@ -4,7 +4,7 @@ import Darwin
 /// Central HTTP client for all Flask backend API calls.
 final class APIService {
     static let shared = APIService()
-    static let defaultBaseURL = "https://arvee-backend-5hqe7uiuka-uc.a.run.app"
+    static let defaultBaseURL = "http://localhost:7860"
     static let localDefaultPort = 7860
 
     private enum StorageKeys {

@@ -193,16 +193,8 @@ struct ChatView: View {
                 .arveePremiumGlassCard(accent: .arveeTeal, cornerRadius: 22)
                 .shadow(color: Color.arveeInk.opacity(0.04), radius: 4, x: 0, y: 2)
 
-            if inputFocused {
-                Button {
-                    inputFocused = false
-                } label: {
-                    Image(systemName: "keyboard.chevron.compact.down")
-                        .font(.system(size: 20, weight: .semibold))
-                        .foregroundColor(.arveeInkMuted)
-                }
-                .accessibilityLabel("Collapse keyboard")
-            }
+            // Keyboard dismiss toolbar provides a dedicated dismiss control.
+            // Remove inline dismiss button to avoid duplicate controls.
 
             if viewModel.isStreaming {
                 Button {
